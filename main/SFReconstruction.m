@@ -8,9 +8,7 @@
 % -------------------------------------------------------------------------
 %
 % Antonio Figueroa Durán
-% anfig@dtu.dk
-%
-% January 2022
+% anfig@elektro.dtu.dk
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc, clear, close all
@@ -43,29 +41,44 @@ h2 = h5read(loudspeaker,'/dataset_lin1/impulse_response');
 pos3 = h5read(loudspeaker,'/dataset_lin3/position');
 h3 = h5read(loudspeaker,'/dataset_lin3/impulse_response');
 
-%% PLOT
+% Sphere
+posSph = h5read(loudspeaker,'/dataset_sph1/position');
+hSph = h5read(loudspeaker,'/dataset_sph1/impulse_response');
+
+%% DATA MERGING
+h_ref = horzcat(h1,h2,h3);
+posLin = vertcat(pos1,pos2,pos3);
+
+% Inner Sphere (samples 155-end)
+posInnSph = posSph(155:end,:);
+hInnSph = hSph(:,155:end);
+
+%% SETUP PLOT
 % Time vector
 t = time(1):1/Fs:time(2)-(1/Fs);
 
 % Data downsizing
-h1_plot = h1(Nplot(1):Nplot(2)-1,:);
-h2_plot = h2(Nplot(1):Nplot(2)-1,:);
-h3_plot = h3(Nplot(1):Nplot(2)-1,:);
-
-% Data merging
-h_plot = horzcat(h1_plot,h2_plot,h3_plot);
-pos = vertcat(pos1,pos2,pos3);
+href2 = h_ref(Nplot(1):Nplot(2)-1,:);
+hInnSph2 = hInnSph(Nplot(1):Nplot(2)-1,:);
 
 % Line plot
-%scatter3(pos(:,1),pos(:,2),pos(:,3))
-%axis([0 D(1) 0 D(2) 0 D(3)])
-
-%% Impulse response plot
 figure
-s = surf(pos(:,1),t,h_plot);
+scatter3(posLin(:,1),posLin(:,2),posLin(:,3)), hold on
+scatter3(posInnSph(:,1),posInnSph(:,2),posInnSph(:,3))
+axis([0 D(1) 0 D(2) 0 D(3)])
+
+%% REFERENCE LINE RIR PLOT
+figure
+s = surf(posLin(:,1),t,href2);
 set(s,'edgecolor','none')
 colormap hot
 view(2)
 colorbar
 caxis([-0.04 0.04])
+
+%% DIRECT SOUND FIELD
+% Time window: 0-50 ms
+
+
+
 

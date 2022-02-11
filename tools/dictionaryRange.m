@@ -1,7 +1,7 @@
 function [H,uk] = dictionaryRange(f,r0,uk,rMinMax,N)
-%[H,uk] = dictionary(f,N) Obtains the H matrix for a sound field of N
-%spherical waves with propagation vector fixed from the given uk and
-%distance to the source between rMinMax.
+%[H,uk] = dictionary(f,N) Obtains the H matrix for a sound field at a
+% position r0 comprised of N spherical waves with propagation vector fixed
+% from the given uk and distances to the source between rMinMax.
 %   Input:
 %       - f         : frequency (Hz). Nf x 1
 %       - r0        : point where the dictionary is created. 3 x 1
@@ -10,7 +10,7 @@ function [H,uk] = dictionaryRange(f,r0,uk,rMinMax,N)
 %       - N         : number of plane waves. Scalar
 %   Output:
 %       - H         : dictionary. N x Nf
-%       - uk        : propagation unit vector. N x 3
+%       - uk        : propagation unit vector. 3 x N
 %
 % Author: Antonio Figueroa Durán
 % Date: February 2022

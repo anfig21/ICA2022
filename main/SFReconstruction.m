@@ -16,6 +16,7 @@ clc, clear, close all
 addpath(genpath('../tools'))
 addpath(genpath('/Volumes/anfig/Data/room019/'))
 
+loadPlotParams
 
 %% INITIAL PARAMETERS
 T = 5;
@@ -66,6 +67,8 @@ figure
 scatter3(posLin(:,1),posLin(:,2),posLin(:,3)), hold on
 scatter3(posInnSph(:,1),posInnSph(:,2),posInnSph(:,3))
 axis([0 D(1) 0 D(2) 0 D(3)])
+xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
+applyAxisProperties(gca)
 
 %% REFERENCE LINE RIR PLOT
 figure
@@ -75,6 +78,9 @@ colormap hot
 view(2)
 colorbar
 caxis([-0.04 0.04])
+xlabel('x in m'), ylabel('y in m')
+
+applyAxisProperties(gca)
 
 %% DIRECT SOUND FIELD
 % Time window: 0-50 ms

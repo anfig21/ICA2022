@@ -3,10 +3,10 @@ function [H,uk] = dictionary(f,r0,N)
 % waves with propagation vector sampled along the surface of a unit sphere.
 %   Input:
 %       - f         : frequency (Hz). Nf x 1
+%       - r0        : point where the dictionary is created. 3 x 1
 %       - N         : number of plane waves. Scalar
 %   Output:
 %       - H         : dictionary. N x Nf
-%       - r0        : point where the dictionary is created. 3 x 1
 %       - uk        : propagation unit vector. N x 3
 %
 % Author: Antonio Figueroa Durán

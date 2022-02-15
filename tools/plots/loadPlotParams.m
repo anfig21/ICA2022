@@ -33,6 +33,7 @@ params.plot.axis.fontsize = 28;
 % Legend properties
 params.plot.legend.fontsize = 28;
 params.plot.legend.location = 'best';
+params.plot.legend.edgecolor = 'w';
 
 % Ticks properties
 params.plot.tick.TickLabelInterpreter = 'latex';

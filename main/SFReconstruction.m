@@ -14,7 +14,8 @@
 clc, clear, close all
 
 addpath(genpath('../tools'))
-addpath(genpath('/Volumes/anfig/Data/room019/'))
+%addpath(genpath('/Volumes/anfig/Data/room019/'))
+addpath(genpath('M:\Data'))
 
 loadPlotParams
 
@@ -68,19 +69,22 @@ scatter3(posLin(:,1),posLin(:,2),posLin(:,3)), hold on
 scatter3(posInnSph(:,1),posInnSph(:,2),posInnSph(:,3))
 axis([0 D(1) 0 D(2) 0 D(3)])
 xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
+legend('Reference Line','Spherical Array')
 applyAxisProperties(gca)
+applyLegendProperties(gca)
 
 %% REFERENCE LINE RIR PLOT
 figure
 s = surf(posLin(:,1),t,href2);
 set(s,'edgecolor','none')
+xlabel('x in m'), ylabel('y in m')
 colormap hot
 view(2)
-colorbar
+c = colorbar;
 caxis([-0.04 0.04])
-xlabel('x in m'), ylabel('y in m')
-
+applyColorbarProperties(c,'Room Impulse Response in Pa/V')
 applyAxisProperties(gca)
+
 
 %% DIRECT SOUND FIELD
 % Time window: 0-50 ms

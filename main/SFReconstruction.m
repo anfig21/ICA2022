@@ -27,11 +27,16 @@ Data.Nsamples = Data.Fs*Data.T;
 Data.F = [20 20e3];
 Data.f = linspace(Data.F(1),Data.F(2),Data.Nsamples);
 
-Plot.T = [5 25]*1e-3;            % Plot lenght
-Plot.Nsamples = Data.Fs*Plot.T;
+Plot.T = [5 25]*1e-3;               % Plot lenght
+Plot.N = Data.Fs*Plot.T;
+
 Data.loudspeaker = 'rir_019_spk1.h5';
+%Data.loudspeaker = 'rir_019_spk2.h5';
 
 %% DATA ACQUISITION
+% Source
+Data.Source.pos = h5read(Data.loudspeaker,'/source/position');
+
 % Line 1
 Data.Line1.pos = h5read(Data.loudspeaker,'/dataset_lin2/position');
 Data.Line1.h = h5read(Data.loudspeaker,'/dataset_lin2/impulse_response');
@@ -47,6 +52,7 @@ Data.Line3.h = h5read(Data.loudspeaker,'/dataset_lin3/impulse_response');
 % Sphere
 Data.Sph.pos = h5read(Data.loudspeaker,'/dataset_sph1/position');
 Data.Sph.h = h5read(Data.loudspeaker,'/dataset_sph1/impulse_response');
+Data.Sph.R0 = mean(Data.Sph.pos,1);
 
 %% DATA MERGING
 Data.Ref.h = horzcat(Data.Line1.h,Data.Line2.h,Data.Line3.h);
@@ -55,47 +61,70 @@ Data.Ref.pos = vertcat(Data.Line1.pos,Data.Line2.pos,Data.Line3.pos);
 % Inner Sphere (156 Microphones: samples 155-end)
 Data.InnSph.h = Data.Sph.h(:,155:end);
 Data.InnSph.pos = Data.Sph.pos(155:end,:);
+Data.InnSph.M = size(Data.InnSph.pos,1);
 
 %% SETUP PLOT
 % Time vector
 Plot.t = Plot.T(1):1/Data.Fs:Plot.T(2)-(1/Data.Fs);
 
 % Data downsizing
-Plot.Ref.h = Data.Ref.h(Plot.Nsamples(1):Plot.Nsamples(2)-1,:);
-Plot.InnSph.h = Data.InnSph.h(Plot.Nsamples(1):Plot.Nsamples(2)-1,:);
+Plot.Ref.h = Data.Ref.h(Plot.N(1):Plot.N(2)-1,:);
+Plot.InnSph.h = Data.InnSph.h(Plot.N(1):Plot.N(2)-1,:);
 
 % Line plot
-figure
-scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
-scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
-axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
-xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
-legend('Reference Line','Spherical Array')
-applyAxisProperties(gca)
-applyLegendProperties(gca)
+% figure
+% scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
+% scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
+% scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3))
+% axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
+% xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
+% legend('Reference Line','Spherical Array','Source')
+% applyAxisProperties(gca)
+% applyLegendProperties(gca)
 
 %% REFERENCE LINE RIR PLOT
-figure
-s = surf(Data.Ref.pos(:,1),Plot.t*1e3,Plot.Ref.h);
-set(s,'edgecolor','none')
-xlabel('x in m'), ylabel('Time in ms')
-colormap hot
-view(2)
-c = colorbar;
-caxis([-0.04 0.04])
-applyColorbarProperties(c,'Room Impulse Response in Pa/V')
-applyAxisProperties(gca)
+% figure
+% s = surf(Data.Ref.pos(:,1),Plot.t*1e3,Plot.Ref.h);
+% set(s,'edgecolor','none')
+% xlabel('x in m'), ylabel('Time in ms')
+% colormap hot
+% view(2)
+% c = colorbar;
+% caxis([-0.04 0.04])
+% applyColorbarProperties(c,'Room Impulse Response in Pa/V')
+% applyAxisProperties(gca)
 
 %% DIRECT SOUND FIELD
 % Time window: 5-10 ms
 Direct.T = [5 10]*1e-3;
-Direct.Nsamples = Data.Fs*Direct.T;
+Direct.N = Data.Fs*Direct.T;
+Direct.Nsamples = Direct.N(2)-Direct.N(1);
+Direct.f = linspace(Data.F(1),Data.F(2),Direct.Nsamples);
 
 % Data Downsizing
-Direct.InnSph.h = Data.InnSph.h(Direct.Nsamples(1):Direct.Nsamples(2)-1,:);
+Direct.InnSph.h = Data.InnSph.h(Direct.N(1):Direct.N(2)-1,:);
 
-% DOA Estimation
-DOA.N = 500;        % Number of plane waves
-[DOA.H,DOA.uk] = dictionary(Data.f,Data.InnSph.pos',DOA.N);
+% Frequency Domain
+Direct.H = fft(Direct.InnSph.h,2*Direct.Nsamples)/Direct.Nsamples;
+Direct.H = [Direct.H(1,:); 2*Direct.H(2:end/2,:)];
+
+% DOA Estimation via SOMP
+DOA = directSOMP(Data,Direct);
+
+% DOA Estimation via TDOA
+TDOA.V = nan(Data.InnSph.M^2,3);
+for ii = 1:Data.InnSph.M
+    for jj = 1:Data.InnSph.M
+        TDOA.V((ii-1)*Data.InnSph.M+jj,:) = Data.InnSph.pos(ii,:)-Data.InnSph.pos(jj,:);
+    end
+end
+
+
+
+
+
+
+
+
 
 

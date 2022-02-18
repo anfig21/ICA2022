@@ -7,7 +7,7 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Interpreter
+%% INTERPRETER
 set(0,'DefaultTextInterpreter', 'latex')
 set(0,'DefaultLegendInterpreter', 'latex')
 set(0,'DefaultAxesTickLabelInterpreter', 'latex')
@@ -17,6 +17,9 @@ set(0,'DefaultColorbarTickLabelInterpreter', 'latex')
 % Line properties
 params.plot.linewidth = 4;
 params.plot.markersize = 5;
+
+set(0,'DefaultLineLineWidth',params.plot.linewidth)
+set(0,'DefaultLineMarkerSize',params.plot.markersize)
 
 % Color
 params.plot.nColors = 5;
@@ -46,3 +49,4 @@ params.plot.size.twocolumnwidth = 17.797;
 [filePath,~,~] = fileparts(mfilename('fullpath'));
 save([filePath,'/plotParams'],'params');
 
+clear params

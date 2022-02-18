@@ -13,12 +13,21 @@ function [H,uk] = dictionary(f,r0,N)
 % Author: Antonio Figueroa Durán
 % Date: February 2022
 
+%% ERROR HANDLING
+if nargin < 3, error('dictionary Error: Not enough input parameters.'), end
+
+%% MAIN CODE
 c = 343;
 Nf = length(f);
 [~,M] = size(r0);
 
 % Spatial sampling
 uk = RandSampleSphere(N,'uniform').';
+
+% Select only those uk with y >= 0
+% uk = uk(:,uk(2,:) >= 0);
+% uk = uk(:,uk(3,:) >= 0);
+% N = size(uk,2);
 
 % Propagation vector
 k = c./(2*pi*f);
@@ -27,10 +36,10 @@ for ii = 1:Nf, kv(:,:,ii) = k(ii)*uk; end
 
 % Dictionary
 H = nan(M,N,Nf);
-c = waitbar(0,'Loading...0%','Name','Building dictionary...');
+c = waitbar(0,'Loading...0\%','Name','Building dictionary...');
 for ii = 1:Nf
-    H(:,ii) = exp(-1i*r0'*kv(:,:,ii));
-    waitbar(ii/Nf,c,sprintf('Loading... %.2f%%',100*ii/Nf));
+    H(:,:,ii) = exp(-1i*r0'*squeeze(kv(:,:,ii)));
+    waitbar(ii/Nf,c,strcat("Loading... ",string(round(100*ii/Nf,2)),"\,\%"));
 end
 delete(c)
 

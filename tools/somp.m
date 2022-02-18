@@ -12,6 +12,10 @@ function x = somp(H, p, K)
 % Author: Antonio Figueroa Durán
 % Date: February 2022
 
+%% ERROR HANDLING
+if nargin < 3, error('somp Error: Not enough input parameters.'), end
+
+%% MAIN CODE
 H = H./vecnorm(H,2,2);  % Normalise columns
 [~,N,Nf] = size(H);     % Dictionary dimentions
 

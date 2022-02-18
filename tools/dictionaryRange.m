@@ -15,6 +15,10 @@ function [H,uk] = dictionaryRange(f,r0,uk,rMinMax,N)
 % Author: Antonio Figueroa Durán
 % Date: February 2022
 
+%% ERROR HANDLING
+if nargin < 5, error('dictionaryRange Error: Not enough input parameters.'), end
+
+%% MAIN CODE
 c = 343;
 
 % Propagation vector

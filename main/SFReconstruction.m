@@ -30,8 +30,8 @@ Data.f = linspace(Data.F(1),Data.F(2),Data.Nsamples);
 Plot.T = [5 25]*1e-3;               % Plot lenght
 Plot.N = Data.Fs*Plot.T;
 
-Data.loudspeaker = 'rir_019_spk1.h5';
-%Data.loudspeaker = 'rir_019_spk2.h5';
+% Data.loudspeaker = 'rir_019_spk1.h5';
+Data.loudspeaker = 'rir_019_spk2.h5';
 
 %% DATA ACQUISITION
 % Source
@@ -94,7 +94,7 @@ Plot.InnSph.h = Data.InnSph.h(Plot.N(1):Plot.N(2)-1,:);
 % applyColorbarProperties(c,'Room Impulse Response in Pa/V')
 % applyAxisProperties(gca)
 
-%% DIRECT SOUND FIELD
+%% ------------ DIRECT SOUND FIELD ------------
 % Time window: 5-10 ms
 Direct.T = [5 10]*1e-3;
 Direct.N = Data.Fs*Direct.T;
@@ -108,23 +108,74 @@ Direct.InnSph.h = Data.InnSph.h(Direct.N(1):Direct.N(2)-1,:);
 Direct.H = fft(Direct.InnSph.h,2*Direct.Nsamples)/Direct.Nsamples;
 Direct.H = [Direct.H(1,:); 2*Direct.H(2:end/2,:)];
 
-% DOA Estimation via SOMP
+%% DOA Estimation via SOMP
 DOA = directSOMP(Data,Direct);
 
-% DOA Estimation via TDOA
-TDOA.V = nan(Data.InnSph.M^2,3);
-for ii = 1:Data.InnSph.M
-    for jj = 1:Data.InnSph.M
-        TDOA.V((ii-1)*Data.InnSph.M+jj,:) = Data.InnSph.pos(ii,:)-Data.InnSph.pos(jj,:);
+%% DOA Estimation via TDOA with only 2 mics (Mics 59 & 69)
+TDOA.Method = 'PHAT';
+TDOA.p = (-Direct.Nsamples:Direct.Nsamples)/Data.Fs;
+
+Direct.H = fft(Direct.InnSph.h,length(TDOA.p))/length(TDOA.p);
+
+TDOA.H = Direct.H(:,[59 69]);
+
+TDOA.R = mean(TDOA.H(:,1).*conj(TDOA.H(:,2)),2);
+
+% Frequency-Domain Weighting Function
+if strcmp(TDOA.Method,'CC')
+    TDOA.theta = 1;
+elseif strcmp(TDOA.Method,'PHAT')
+    TDOA.theta = 1./abs(TDOA.R);
+end
+
+% Generalised Cross Spectrum
+TDOA.GCS = TDOA.theta.*TDOA.R;
+
+% Time Domain
+TDOA.GCC = fftshift(ifft(TDOA.GCS,[],'symmetric'));
+
+plot(TDOA.p*1e3,TDOA.GCC), grid on
+disp(TDOA.p(TDOA.GCC==max(TDOA.GCC))*1e3)
+
+%% DOA Estimation via TDOA
+TDOA.Method = 'PHAT';
+TDOA.p = (-Direct.Nsamples/2:Direct.Nsamples/2-1)/Data.Fs;
+
+% TDOA.R = nan(Data.InnSph.M,Data.InnSph.M,Direct.Nsamples);
+% for ii = 1:Data.InnSph.M
+%     for jj = 1:Data.InnSph.M
+%         TDOA.R(ii,jj,:) = mean(Direct.H(:,ii).*conj(Direct.H(:,jj)),2);
+%     end
+% end
+TDOA.R = nan(2,2,Direct.Nsamples);
+for ii = 1:2
+    for jj = 1:2
+        TDOA.R(ii,jj,:) = mean(TDOA.H(:,ii).*conj(TDOA.H(:,jj)),2);
     end
 end
 
+% Frequency-Domain Weighting Function
+if strcmp(TDOA.Method,'CC')
+    TDOA.theta = 1;
+elseif strcmp(TDOA.Method,'PHAT')
+    TDOA.theta = 1./abs(TDOA.R);
+end
 
+% Generalised Cross Spectrum
+TDOA.GCS = TDOA.theta.*TDOA.R;
 
+% Time Domain
+TDOA.GCS_Full = cat(3,TDOA.GCS(:,:,1),TDOA.GCS(:,:,2:end)/2);
+TDOA.GCS_Full = cat(3,TDOA.GCS_Full,flip(conj(TDOA.GCS_Full)));
 
+TDOA.GCC = fftshift(ifft(TDOA.GCS_Full,Direct.Nsamples,3,'symmetric'),3);
+% TDOA.GCC = fftshift(ifft(TDOA.GCS_Full,[],3,'symmetric'),3);
 
+TDOA.Ra = nan(Direct.Nsamples,1);
+for ii = 1:Direct.Nsamples
+    TDOA.Ra(ii) = det(squeeze(TDOA.GCC(:,:,ii)));
+end
 
-
-
+figure, plot(TDOA.p*1e3,TDOA.Ra), grid on
 
 

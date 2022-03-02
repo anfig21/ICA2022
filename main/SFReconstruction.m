@@ -70,6 +70,10 @@ Plot.t = Plot.T(1):1/Data.Fs:Plot.T(2)-(1/Data.Fs);
 Plot.Ref.h = Data.Ref.h(Plot.N(1):Plot.N(2)-1,:);
 Plot.InnSph.h = Data.InnSph.h(Plot.N(1):Plot.N(2)-1,:);
 
+% Frequency domain
+Data.H = fft(Data.InnSph.h,2*Data.Nsamples)/Data.Nsamples;
+Data.H = [Data.H(1,:); 2*Data.H(2:end/2,:)];
+
 % Line plot
 % figure
 % scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
@@ -81,16 +85,12 @@ Plot.InnSph.h = Data.InnSph.h(Plot.N(1):Plot.N(2)-1,:);
 % applyAxisProperties(gca)
 % applyLegendProperties(gcf)
 
-% Frequency domain
-Data.H = fft(Data.InnSph.h,2*Data.Nsamples)/Data.Nsamples;
-Data.H = [Data.H(1,:); 2*Data.H(2:end/2,:)];
-
+% Frequency response
 % figure, plot(Data.f*1e-3,20*log10(abs(Data.H(:,[40 59 69])))), grid on
 % xlabel('Frequency in kHz'), ylabel('Magnitude $|H(j\omega)|$ in dB')
 % legend('Mic 40','Mic 59','Mic 69')
 % applyAxisProperties(gca)
 % applyLegendProperties(gcf)
-
 
 %% REFERENCE LINE RIR PLOT
 % figure
@@ -106,16 +106,16 @@ Data.H = [Data.H(1,:); 2*Data.H(2:end/2,:)];
 
 %% ------------ DIRECT SOUND FIELD ------------
 % Time window: 5-10 ms
-Direct.T = [5 10]*1e-3;
-Direct.N = Data.Fs*Direct.T;
-Direct.Nsamples = Direct.N(2)-Direct.N(1);
-Direct.f = Data.Fs/Direct.Nsamples*(0:Direct.Nsamples-1)/2;
+Direct.T = 10*1e-3;
+Direct.Nsamples = Data.Fs*Direct.T;
 
-% Data Downsizing
-Direct.InnSph.h = Data.InnSph.h(Direct.N(1):Direct.N(2)-1,:);
+% Windowing - Hanning (hann) window
+Direct.w = vertcat(repmat(hann(Direct.Nsamples),1,Data.InnSph.M),...
+    zeros(Data.Nsamples-Direct.Nsamples,Data.InnSph.M));
+Direct.InnSph.h = Direct.w.*Data.InnSph.h;
 
 % Frequency Domain
-Direct.H = fft(Direct.InnSph.h,2*Direct.Nsamples)/Direct.Nsamples;
+Direct.H = fft(Direct.InnSph.h,2*Data.Nsamples)/Data.Nsamples;
 Direct.H = [Direct.H(1,:); 2*Direct.H(2:end/2,:)];
 
 % True DOA
@@ -123,7 +123,7 @@ Direct.DOA = Data.Sph.R0-Data.Source.pos;
 Direct.DOA = Direct.DOA/vecnorm(Direct.DOA);
 
 % Plot frequency response of mics [40, 59, 69]
-% figure, plot(Direct.f*1e-3,20*log10(abs(Direct.H(:,[40 59 69])))), grid on
+% figure, plot(Data.f*1e-3,20*log10(abs(Direct.H(:,[40 59 69])))), grid on
 % xlabel('Frequency in kHz'), ylabel('Magnitude $|H(j\omega)|$ in dB')
 % legend('Mic 40','Mic 59','Mic 69')
 % applyAxisProperties(gca)
@@ -131,8 +131,8 @@ Direct.DOA = Direct.DOA/vecnorm(Direct.DOA);
 
 %% Dictionary of plane waves
 % Dictionary
-Dict.f = Data.f(20 < Data.f & Data.f < 100);
-Dict.f = Dict.f(1:5:end);
+Dict.f = Data.f(60 <= Data.f & Data.f <= 2000);
+Dict.f = Dict.f(1:10:end);
 %Dict.f = 2e3;          % DOA estimation at 2 kHZ
 Dict.N = 1e3;           % Number of plane waves
 Dict.K = 1;             % Number of sources (SOMP)
@@ -147,7 +147,7 @@ DOA = directSOMP(Data,Direct,Dict);
 LS = directLS(Data,Direct,Dict);
 
 %% DOA Estimation via Regularised Least-Squares
-RLS = directRLS(Data,Direct,Dict);
+RLS = directRLS(Data,Direct,Dict,'true');
 
 %% DOA Estimation via TDOA with only 2 mics (Mics 59 & 69)
 TDOA.Method = 'PHAT';

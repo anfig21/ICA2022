@@ -39,7 +39,7 @@ RLS.Avg = RLS.Avg/vecnorm(RLS.Avg);
 if plotFlag
     % Mean Squared Error
     figure, plot(Dictionary.f,RLS.Error), grid on
-    xlabel('Frequency in kHz'), ylabel('DOA - Mean Squared Error')
+    xlabel('Frequency in Hz'), ylabel('DOA - Mean Squared Error')
     applyAxisProperties(gca)
     
     % 3-D Estimation

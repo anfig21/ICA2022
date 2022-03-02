@@ -28,7 +28,6 @@ DOA.Est = Dictionary.uk(:,DOA.Idx);
 %[DOA.EstSph(3),DOA.EstSph(2),DOA.EstSph(1)] = cart2sph(DOA.Est(1),DOA.Est(2),DOA.Est(3));
 
 % Plot
-%Est = 2*[zeros(3,1) DOA.Est]+Data.Sph.R0.';
 uk = Dictionary.uk+Data.Sph.R0.';
 
 if plotFlag
@@ -37,7 +36,6 @@ if plotFlag
     scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
     scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3))
     scatter3(uk(1,:),uk(2,:),uk(3,:))
-    %line(Est(1,:),Est(2,:),Est(3,:))
     quiver3(Data.Sph.R0(1),Data.Sph.R0(2),Data.Sph.R0(3),DOA.Est(1),DOA.Est(2),DOA.Est(3),2,'Linewidth',4)
     axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
     xlabel('x in m'), ylabel('y in m'), zlabel('z in m')

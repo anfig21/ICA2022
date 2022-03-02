@@ -30,15 +30,13 @@ end
 
 LS.Error = vecnorm(Direct.DOA.'-LS.Est);
 
-
-
 LS.Avg = mean(LS.Est,2);
 LS.Avg = LS.Avg/vecnorm(LS.Avg);
 
 if plotFlag
     % Mean Squared Error
     figure, plot(Dictionary.f,LS.Error), grid on
-    xlabel('Frequency in kHz'), ylabel('DOA - Mean Squared Error')
+    xlabel('Frequency in Hz'), ylabel('DOA - Mean Squared Error')
     applyAxisProperties(gca)
     
     % 3-D Estimation

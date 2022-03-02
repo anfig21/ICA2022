@@ -24,14 +24,13 @@ Data.T = 5;
 Data.Fs = 48e3;
 Data.D = [6.266,9.357,2.977];       % Room dimensions
 Data.Nsamples = Data.Fs*Data.T;
-Data.F = [20 20e3];
-Data.f = linspace(Data.F(1),Data.F(2),Data.Nsamples);
+Data.f = Data.Fs/Data.Nsamples*(0:Data.Nsamples-1)/2;
 
 Plot.T = [5 25]*1e-3;               % Plot lenght
 Plot.N = Data.Fs*Plot.T;
 
-% Data.loudspeaker = 'rir_019_spk1.h5';
-Data.loudspeaker = 'rir_019_spk2.h5';
+Data.loudspeaker = 'rir_019_spk1.h5';
+% Data.loudspeaker = 'rir_019_spk2.h5';
 
 %% DATA ACQUISITION
 % Source
@@ -80,7 +79,18 @@ Plot.InnSph.h = Data.InnSph.h(Plot.N(1):Plot.N(2)-1,:);
 % xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
 % legend('Reference Line','Spherical Array','Source')
 % applyAxisProperties(gca)
-% applyLegendProperties(gca)
+% applyLegendProperties(gcf)
+
+% Frequency domain
+Data.H = fft(Data.InnSph.h,2*Data.Nsamples)/Data.Nsamples;
+Data.H = [Data.H(1,:); 2*Data.H(2:end/2,:)];
+
+% figure, plot(Data.f*1e-3,20*log10(abs(Data.H(:,[40 59 69])))), grid on
+% xlabel('Frequency in kHz'), ylabel('Magnitude $|H(j\omega)|$ in dB')
+% legend('Mic 40','Mic 59','Mic 69')
+% applyAxisProperties(gca)
+% applyLegendProperties(gcf)
+
 
 %% REFERENCE LINE RIR PLOT
 % figure
@@ -99,7 +109,7 @@ Plot.InnSph.h = Data.InnSph.h(Plot.N(1):Plot.N(2)-1,:);
 Direct.T = [5 10]*1e-3;
 Direct.N = Data.Fs*Direct.T;
 Direct.Nsamples = Direct.N(2)-Direct.N(1);
-Direct.f = linspace(Data.F(1),Data.F(2),Direct.Nsamples);
+Direct.f = Data.Fs/Direct.Nsamples*(0:Direct.Nsamples-1)/2;
 
 % Data Downsizing
 Direct.InnSph.h = Data.InnSph.h(Direct.N(1):Direct.N(2)-1,:);
@@ -108,8 +118,89 @@ Direct.InnSph.h = Data.InnSph.h(Direct.N(1):Direct.N(2)-1,:);
 Direct.H = fft(Direct.InnSph.h,2*Direct.Nsamples)/Direct.Nsamples;
 Direct.H = [Direct.H(1,:); 2*Direct.H(2:end/2,:)];
 
+% True DOA
+Direct.DOA = Data.Sph.R0-Data.Source.pos;
+Direct.DOA = Direct.DOA/vecnorm(Direct.DOA);
+
+% Plot frequency response of mics [40, 59, 69]
+% figure, plot(Direct.f*1e-3,20*log10(abs(Direct.H(:,[40 59 69])))), grid on
+% xlabel('Frequency in kHz'), ylabel('Magnitude $|H(j\omega)|$ in dB')
+% legend('Mic 40','Mic 59','Mic 69')
+% applyAxisProperties(gca)
+% applyLegendProperties(gcf)
+
+%% Dictionary of plane waves
+% Dictionary
+LS.f = Data.f(20 < Data.f & Data.f < 100);
+%LS.f = 2e3;        % DOA estimation at 2 kHZ
+LS.N = 500;         % Number of plane waves
+LS.Est = nan(3,length(LS.f));
+
+[LS.CA,LS.uk] = dictionary(LS.f,Data.InnSph.pos',LS.N);
+
 %% DOA Estimation via SOMP
 DOA = directSOMP(Data,Direct);
+
+%% DOA Estimation via Least-Squares
+% Least-Squares solution across frequency
+for ii = 1:length(LS.f)
+    LS.x = pinv(LS.CA(:,:,ii))*Data.H(Data.f==LS.f(ii),:).';
+    
+    [~,LS.Idx] = max(abs(LS.x));
+    LS.Est(:,ii) = LS.uk(:,LS.Idx);
+end
+
+LS.Error = vecnorm(Direct.DOA.'-LS.Est);
+
+figure, plot(LS.f,LS.Error), grid on
+xlabel('Frequency in kHz'), ylabel('DOA - Mean Squared Error')
+applyAxisProperties(gca)
+
+LS.Avg = mean(LS.Est,2);
+LS.Avg = LS.Avg/vecnorm(LS.Avg);
+
+figure
+scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
+scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
+scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3))
+quiver3(Data.Sph.R0(1),Data.Sph.R0(2),Data.Sph.R0(3),LS.Avg(1),LS.Avg(2),LS.Avg(3),2,'Linewidth',4)
+axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
+xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
+legend('Reference Line','Spherical Array','Source')
+applyAxisProperties(gca)
+applyLegendProperties(gcf)
+
+%% DOA Estimation via Regularised Least-Squares
+% Regularised Least-Squares solution across frequency - 'l-curve' method
+for ii = 1:length(LS.f)
+    [LS.U,LS.S,LS.V] = csvd(LS.CA(:,:,ii));
+    [LS.lambda,~,~,~] = l_curve(LS.U,LS.S,Data.H(Data.f==LS.f(ii),:),'Tikh');
+    [LS.x,~,~] = tikhonov(LS.U,LS.S,LS.V,Data.H(Data.f==LS.f(ii)),LS.lambda);
+    
+    [~,LS.Idx] = max(abs(LS.x));
+    LS.Est(:,ii) = LS.uk(:,LS.Idx);
+end
+
+LS.Error = vecnorm(Direct.DOA.'-LS.Est);
+
+figure, plot(LS.f,LS.Error), grid on
+xlabel('Frequency in kHz'), ylabel('DOA - Mean Squared Error')
+applyAxisProperties(gca)
+
+LS.Avg = mean(LS.Est,2);
+LS.Avg = LS.Avg/vecnorm(LS.Avg);
+
+figure
+scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
+scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
+scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3))
+quiver3(Data.Sph.R0(1),Data.Sph.R0(2),Data.Sph.R0(3),LS.Avg(1),LS.Avg(2),LS.Avg(3),2,'Linewidth',4)
+axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
+xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
+legend('Reference Line','Spherical Array','Source')
+applyAxisProperties(gca)
+applyLegendProperties(gcf)
+
 
 %% DOA Estimation via TDOA with only 2 mics (Mics 59 & 69)
 TDOA.Method = 'PHAT';

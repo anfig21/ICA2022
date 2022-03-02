@@ -21,13 +21,16 @@ c = 343;
 Nf = length(f);
 [~,M] = size(r0);
 
-% Spatial sampling
-uk = RandSampleSphere(N,'uniform').';
+% Spatial sampling - Fibonacci Algorithm
+uk = fibonacciSampling(N);
 
 % Select only those uk with y >= 0
 % uk = uk(:,uk(2,:) >= 0);
 % uk = uk(:,uk(3,:) >= 0);
 % N = size(uk,2);
+
+% If f containes 0 Hz, it is substituted by the next sample
+if f(1) == 0, f(1) = f(2); end
 
 % Propagation vector
 k = c./(2*pi*f);

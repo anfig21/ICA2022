@@ -1,8 +1,8 @@
-function applyLegendProperties(leg)
+function applyLegendProperties(h)
 %applyLegendProperties(leg) Reads axis configuration from plotParams.mat
 %and applies to legend in plot leg
 %   Input:
-%       - leg       : plot handler
+%       - h         : figure handler
 %   Output:
 %       none
 %
@@ -22,6 +22,8 @@ load([filePath,'/plotParams.mat'],'params');
 % Check if params.plot.legend is a valid structure
 if ~isfield(params.plot,'legend'), return, end
 if ~isstruct(params.plot.legend), return, end
+
+leg = findobj(h,'type','Legend');
 
 % Get the parameters from the params.plot.legend structure
 fieldName = fieldnames(params.plot.legend);

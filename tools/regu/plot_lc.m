@@ -52,10 +52,10 @@ else
     if (~HoldState), hold off; end
   end
 end
-xlabel('residual norm || A x - b ||_2')
+xlabel('Residual norm $|| A x - b ||_2$')
 if (ps==1)
-  ylabel('solution norm || x ||_2')
+  ylabel('Solution norm $|| x ||_2$')
 else
-  ylabel('solution semi-norm || L x ||_2')
+  ylabel('Solution semi-norm $|| L x ||_2$')
 end
 title('L-curve')

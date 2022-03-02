@@ -1,4 +1,4 @@
-function DOA = directSOMP(Data,Direct,plotFlag)
+function DOA = directSOMP(Data,Direct,Dictionary,plotFlag)
 %DOA = directSOMP(Data,Direct) Applies Simultaneous Orthogonal Matching
 %Pursuit over the Direct Sound Field to obtain the position of the source.
 %Disclaimer: DOA estimation uses plane waves. Therefore the model is not
@@ -6,6 +6,7 @@ function DOA = directSOMP(Data,Direct,plotFlag)
 %   Input:
 %       - Data      : raw data. Structure
 %       - Direct    : direct sound field. Structure
+%       - Dictionary: dictionary of plane waves. Structure
 %       - plotFlag  : 'true' to plot setup & DOA estimation
 %                     'false' to avoid plotting. Default value
 %   Output:
@@ -16,24 +17,19 @@ function DOA = directSOMP(Data,Direct,plotFlag)
 
 %% ERROR HANDLING
 % plotFlag default value
-if nargin < 3, plotFlag = false;
-elseif nargin < 2, error('directSOMP Error: Not enough input parameters.'), end
+if nargin < 4, plotFlag = false;
+elseif nargin < 3, error('directSOMP Error: Not enough input parameters.'), end
 
 %% MAIN CODE
-% DOA Estimation
-DOA.K = 1;
-DOA.N = 500;        % Number of plane waves
-[DOA.CA,DOA.uk] = dictionary(Direct.f,Data.InnSph.pos',DOA.N);
-
 % SOMP
-DOA.x = somp(DOA.CA, Direct.H.', DOA.K);
-DOA.Idx = find(DOA.x,DOA.K);
-DOA.Est = DOA.uk(:,DOA.Idx);
+DOA.x = somp(Dictionary.CA, Direct.H.', Dictionary.K);
+DOA.Idx = find(DOA.x,Dictionary.K);
+DOA.Est = Dictionary.uk(:,DOA.Idx);
 %[DOA.EstSph(3),DOA.EstSph(2),DOA.EstSph(1)] = cart2sph(DOA.Est(1),DOA.Est(2),DOA.Est(3));
 
 % Plot
 %Est = 2*[zeros(3,1) DOA.Est]+Data.Sph.R0.';
-uk = DOA.uk+Data.Sph.R0.';
+uk = Dictionary.uk+Data.Sph.R0.';
 
 if plotFlag
     figure
@@ -47,7 +43,7 @@ if plotFlag
     xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
     legend('Reference Line','Spherical Array','Source')
     applyAxisProperties(gca)
-    applyLegendProperties(gca)
+    applyLegendProperties(gcf)
 end
 
 end

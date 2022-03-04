@@ -22,18 +22,16 @@ elseif nargin < 3, error('directRLS Error: Not enough input parameters.'), end
 %% MAIN CODE
 % Regularised Least-Squares solution across frequency - 'l-curve' method
 RLS.Est = nan(3,length(Dictionary.f));
-for ii = 1:length(Dictionary.f)
-    [RLS.U,RLS.s,RLS.V] = csvd(squeeze(Dictionary.CA(:,:,ii)));
-    [RLS.lambda,~,~,~] = l_curve(RLS.U,RLS.s,Data.H(Data.f==Dictionary.f(ii),:).','Tikh',[],[],false);
-    [RLS.x,~,~] = tikhonov(RLS.U,RLS.s,RLS.V,Data.H(Data.f==Dictionary.f(ii),:).',RLS.lambda);
+for ii = 1:length(Dictionary.f)    
+    [x,~] = reguLeastSquares(squeeze(Dictionary.CA(:,:,ii)),Direct.InnSph.H(Data.f==Dictionary.f(ii),:).');
     
-    [~,RLS.Idx] = max(abs(RLS.x));
-    RLS.Est(:,ii) = Dictionary.uk(:,RLS.Idx);
+    [~,Idx] = max(abs(x));
+    RLS.Est(:,ii) = Dictionary.uk(:,Idx);
 end
 
 RLS.Error = vecnorm(Direct.DOA.'-RLS.Est);
 
-RLS.Avg = -mean(RLS.Est,2);
+RLS.Avg = mean(RLS.Est,2);
 RLS.Avg = RLS.Avg/vecnorm(RLS.Avg);
 
 if plotFlag

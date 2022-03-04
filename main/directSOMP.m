@@ -22,15 +22,13 @@ elseif nargin < 3, error('directSOMP Error: Not enough input parameters.'), end
 
 %% MAIN CODE
 % SOMP
-DOA.x = somp(Dictionary.CA, Direct.H.', Dictionary.K);
+DOA.x = somp(Dictionary.CA, Direct.InnSph.H.', Dictionary.K);
 DOA.Idx = find(DOA.x,Dictionary.K);
 DOA.Est = Dictionary.uk(:,DOA.Idx);
-%[DOA.EstSph(3),DOA.EstSph(2),DOA.EstSph(1)] = cart2sph(DOA.Est(1),DOA.Est(2),DOA.Est(3));
-
-% Plot
-uk = Dictionary.uk+Data.Sph.R0.';
 
 if plotFlag
+    uk = Dictionary.uk+Data.Sph.R0.';
+    
     figure
     scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
     scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))

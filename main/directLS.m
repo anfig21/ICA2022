@@ -22,10 +22,10 @@ elseif nargin < 3, error('directLS Error: Not enough input parameters.'), end
 % Least-Squares solution across frequency
 LS.Est = nan(3,length(Dictionary.f));
 for ii = 1:length(Dictionary.f)
-    LS.x = pinv(Dictionary.CA(:,:,ii))*Data.H(Data.f==Dictionary.f(ii),:).';
+    x = pinv(Dictionary.CA(:,:,ii))*Direct.InnSph.H(Data.f==Dictionary.f(ii),:).';
     
-    [~,LS.Idx] = max(abs(LS.x));
-    LS.Est(:,ii) = Dictionary.uk(:,LS.Idx);
+    [~,Idx] = max(abs(x));
+    LS.Est(:,ii) = Dictionary.uk(:,Idx);
 end
 
 LS.Error = vecnorm(Direct.DOA.'-LS.Est);

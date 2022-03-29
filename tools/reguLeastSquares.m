@@ -22,7 +22,7 @@ function [x,lambda] = reguLeastSquares(H,p,method,plotFlag)
 %% ERROR HANDLING
 % plotFlag default value
 if nargin < 2, error('reguLeastSquares Error: Not enough input parameters.'), end
-if nargin < 3 || isempty(varargin(3)), method = 'lcurve'; end
+if nargin < 3, method = 'lcurve'; end
 if nargin < 4, plotFlag = false; end
 
 %% MAIN CODE

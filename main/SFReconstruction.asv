@@ -112,7 +112,7 @@ Direct.DOA = Direct.DOA/vecnorm(Direct.DOA);
 
 %% Dictionary of plane waves
 % Dictionary
-Dict.f = Data.f(200 <= Data.f & Data.f <= 300);
+Dict.f = Data.f(320 <= Data.f & Data.f <= 400);
 Dict.f = Dict.f(1:50:end);
 % Dict.f = 2e2;                 % DOA estimation at 200 Hz
 Dict.Plane.N = 1e3;             % Number of plane waves
@@ -146,6 +146,11 @@ Dict.Sph.rMinMax = [0.3 7];
 
 %% Range Estimation via CS
 CS = dirRange_CS(Data,Direct,CS,Dict,'true');
+
+%% Range Estimation via Fused Total Generalised Variation - Laplacian/Stencil 3x3
+Dict.Grid.Res = [.5 .5];
+[Dict.Grid.H,Dict.Grid.rs,Dict.Grid.N,Dict.Grid.Nx,Dict.Grid.Ny] = ...
+    dictionaryGrid(Dict.f,Data.InnSph.pos,Data.Sph.R0.',Data.D,TV.Res(1),TV.Res(2));
 
 
 

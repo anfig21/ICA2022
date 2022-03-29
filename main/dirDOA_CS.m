@@ -20,12 +20,12 @@ elseif nargin < 3, error('dirDOA_CS Error: Not enough input parameters.'), end
 
 %% MAIN CODE
 CS.DOA.Est = nan(3,length(Dict.f));
+Nnorm = 1.1*Direct.InnSph.NnormLcurve;
 
 c = waitbar(0,'Loading...0\%','Name','CVX across frequencies...');
 for ii = 1:length(Dict.f)
     Hii = squeeze(Dict.Plane.H(:,:,ii));
     pii = Direct.InnSph.H(Data.f==Dict.f(ii),:).';
-    Nnorm = 1.1*Direct.InnSph.Nnorm(Data.f==Dict.f(ii));
     
     % CVX Formulation
     cvx_begin quiet
@@ -46,7 +46,7 @@ delete(c)
 
 CS.DOA.Error = vecnorm(Direct.DOA.'-CS.DOA.Est);
 
-CS.DOA.Avg = mean(CS.DOA.Est,2);
+CS.DOA.Avg = mode(CS.DOA.Est,2);
 CS.DOA.Avg = CS.DOA.Avg/vecnorm(CS.DOA.Avg);
 
 %% PLOT
@@ -61,10 +61,11 @@ if plotFlag
     scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
     scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
     scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3),200,'filled')
+    %scatter3(CS.DOA.Est(1,:)+Data.Sph.R0(1),CS.DOA.Est(2,:)+Data.Sph.R0(2),CS.DOA.Est(3,:)+Data.Sph.R0(3))
     quiver3(Data.Sph.R0(1),Data.Sph.R0(2),Data.Sph.R0(3),-CS.DOA.Avg(1),-CS.DOA.Avg(2),-CS.DOA.Avg(3),2,'Linewidth',4)
     axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
     xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
-    legend('Reference Line','Spherical Array','Source')
+    legend('Reference Line','Spherical Array','Source','Estimation')
     applyAxisProperties(gca)
     applyLegendProperties(gcf)
 end

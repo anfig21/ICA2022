@@ -1,5 +1,5 @@
-function CS = dirDOA_CS(Data,Direct,Dict,plotFlag)
-%CS = dirDOA_CS(Data,Direct,Dict,plotFlag) Applies Compressive
+function DOA = dirDOA_CS(Data,Direct,Dict,plotFlag)
+%DOA = dirDOA_CS(Data,Direct,Dict,plotFlag) Applies Compressive
 %Sensing to the Direct Sound Field to obtain the DOA of the source.
 %   Input:
 %       - Data      : raw data. Structure
@@ -8,7 +8,7 @@ function CS = dirDOA_CS(Data,Direct,Dict,plotFlag)
 %       - plotFlag  : 'true' to plot setup & DOA estimation
 %                     'false' to avoid plotting. Default value
 %   Output:
-%       - CS        : DOA estimation and dictionary via CS. Structure
+%       - DOA        : DOA estimation and dictionary via CS. Structure
 %
 % Author: Antonio Figueroa Durán
 % Date: March 2022
@@ -19,7 +19,7 @@ if nargin < 4, plotFlag = false;
 elseif nargin < 3, error('dirDOA_CS Error: Not enough input parameters.'), end
 
 %% MAIN CODE
-CS.DOA.Est = nan(3,length(Dict.f));
+DOA.Est = nan(3,length(Dict.f));
 Nnorm = 1.1*Direct.InnSph.NnormLcurve;
 
 c = waitbar(0,'Loading...0\%','Name','CVX across frequencies...');
@@ -37,22 +37,22 @@ for ii = 1:length(Dict.f)
     cvx_end
     
     [~,Idx] = max(abs(x));
-    CS.DOA.Est(:,ii) = Dict.Plane.uk(:,Idx);
+    DOA.Est(:,ii) = Dict.Plane.uk(:,Idx);
     
     waitbar(ii/length(Dict.f),c,strcat("Loading... ",...
         string(round(100*ii/length(Dict.f),2)),"\,\%"));
 end
 delete(c)
 
-CS.DOA.Error = vecnorm(Direct.DOA.'-CS.DOA.Est);
+DOA.Error = vecnorm(Direct.TrueDOA.'-DOA.Est);
 
-CS.DOA.Avg = mode(CS.DOA.Est,2);
-CS.DOA.Avg = CS.DOA.Avg/vecnorm(CS.DOA.Avg);
+DOA.Avg = mode(DOA.Est,2);
+DOA.Avg = DOA.Avg/vecnorm(DOA.Avg);
 
 %% PLOT
 if plotFlag
     % Mean Squared Error
-    figure, plot(Dict.f,CS.DOA.Error), grid on
+    figure, plot(Dict.f,DOA.Error), grid on
     xlabel('Frequency in Hz'), ylabel('DOA - Mean Squared Error'), ylim([0 2])
     applyAxisProperties(gca)
     
@@ -61,8 +61,8 @@ if plotFlag
     scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
     scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
     scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3),200,'filled')
-    %scatter3(CS.DOA.Est(1,:)+Data.Sph.R0(1),CS.DOA.Est(2,:)+Data.Sph.R0(2),CS.DOA.Est(3,:)+Data.Sph.R0(3))
-    quiver3(Data.Sph.R0(1),Data.Sph.R0(2),Data.Sph.R0(3),-CS.DOA.Avg(1),-CS.DOA.Avg(2),-CS.DOA.Avg(3),2,'Linewidth',4)
+    %scatter3(DOA.Est(1,:)+Data.Sph.R0(1),DOA.Est(2,:)+Data.Sph.R0(2),DOA.Est(3,:)+Data.Sph.R0(3))
+    quiver3(Data.Sph.R0(1),Data.Sph.R0(2),Data.Sph.R0(3),-DOA.Avg(1),-DOA.Avg(2),-DOA.Avg(3),2,'Linewidth',4)
     axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
     xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
     legend('Reference Line','Spherical Array','Source','Estimation')

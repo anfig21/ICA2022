@@ -42,5 +42,7 @@ if plotFlag
     applyLegendProperties(gcf)
 end
 
+DOA.Error = vecnorm(Direct.TrueDOA.'-DOA.Est);
+
 end
 

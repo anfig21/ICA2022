@@ -44,7 +44,7 @@ cvx_end
 %     subject to
 %         norm((A*q_en-ph),2) <= rnl;
 % cvx_end
-% toc
+% tocl
  
 %% TOTAL VARIATION L-1
 D=-1*eye(ny0)+circshift(eye(ny0),-1);

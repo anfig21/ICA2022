@@ -44,5 +44,7 @@ end
 
 DOA.Error = vecnorm(Direct.TrueDOA.'-DOA.Est);
 
+disp('Direct sound: DOA - SOMP... OK')
+
 end
 

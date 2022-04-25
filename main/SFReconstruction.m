@@ -79,7 +79,17 @@ c = colorbar;
 caxis([-0.04 0.04])
 applyColorbarProperties(c,'Room Impulse Response in Pa/V')
 applyAxisProperties(gca)
-clear s
+clear s c
+
+%% Dictionary of plane waves
+% Dictionary
+Dict.f = Data.f(300 <= Data.f & Data.f <= 400);
+Dict.f = Dict.f(1:50:end);
+% Dict.f = 3e2;                 % DOA estimation at 300 Hz
+Dict.Plane.N = 1e3;             % Number of plane waves
+Dict.Plane.K = 1;               % Number of sources (SOMP)
+
+[Dict.Plane.H,Dict.Plane.uk] = dictionary(Dict.f,Data.InnSph.pos',Dict.Plane.N);
 
 %% ------------ DIRECT SOUND FIELD ------------
 % Time window: 5-10 ms
@@ -87,16 +97,6 @@ Direct.T = 8*1e-3;     % Source near field
 % Direct.T = 22*1e-3;   % Source far field
 
 Direct = directWindow(Data,Direct);
-
-%% Dictionary of plane waves
-% Dictionary
-Dict.f = Data.f(300 <= Data.f & Data.f <= 400);
-% Dict.f = Dict.f(1:50:end);
-Dict.f = 3e2;                 % DOA estimation at 200 Hz
-Dict.Plane.N = 1e3;             % Number of plane waves
-Dict.Plane.K = 1;               % Number of sources (SOMP)
-
-[Dict.Plane.H,Dict.Plane.uk] = dictionary(Dict.f,Data.InnSph.pos',Dict.Plane.N);
 
 %% DOA Estimation via SOMP
 % Direct.DOA.SOMP = dirDOA_SOMP(Data,Direct,Dict,'true');
@@ -133,15 +133,13 @@ Early = earlyWindow(Data,Early);
 Early.InnSph.NnormLcurve = 1.685e-6;
 
 %% DOA Estimation via Compressive Sensing
-Early.DOA.CS = earlyDOA_CS(Data,Early,Dict,'true');
+% Early.DOA.CS = earlyDOA_CS(Data,Early,Dict,'true');
 
+%% DOA Estimation via Elastic Net
+% Early.DOA.EN = earlyDOA_EN(Data,Early,Dict,'true');
 
-
-
-
-
-
-
+%% DOA Estimation via Weighted LASSO
+Early.DOA.WL = earlyDOA_WL(Data,Early,Dict,'true');
 
 
 

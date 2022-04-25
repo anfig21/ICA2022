@@ -55,7 +55,8 @@ Data.InnSph.P = [Data.InnSph.P(1,:); 2*Data.InnSph.P(2:end/2,:)];
 Data.Sph.Nnorm = mean(abs(Data.Sph.N),2);
 
 %% SETUP PLOT
-Plot.T = [5 25]*1e-3;               % Plot lenght
+Plot.T = [5 25]*1e-3;       % Source near field
+% Plot.T = [15 35]*1e-3;    % Source far field
 Plot.N = Data.Fs*Plot.T;
 
 % Time vector
@@ -68,89 +69,89 @@ Plot.InnSph.h = Data.InnSph.h(Plot.N(1):Plot.N(2)-1,:);
 % plotFreqResponse(Data)
 
 % REFERENCE LINE RIR PLOT
-% figure
-% s = surf(Data.Ref.pos(:,1),Plot.t*1e3,Plot.Ref.h);
-% set(s,'edgecolor','none')
-% xlabel('x in m'), ylabel('Time in ms')
-% colormap hot
-% view(2)
-% c = colorbar;
-% caxis([-0.04 0.04])
-% applyColorbarProperties(c,'Room Impulse Response in Pa/V')
-% applyAxisProperties(gca)
-
-%% ------------ DIRECT SOUND FIELD ------------
-% Time window: 5-10 ms
-Direct.T = 10*1e-3;
-Direct.Nsamples = Data.Fs*Direct.T;
-
-% Windowing - Hanning (hann) window
-Direct.w = vertcat(repmat(hann(Direct.Nsamples),1,Data.InnSph.M),...
-    zeros(Data.Nsamples-Direct.Nsamples,Data.InnSph.M));
-Direct.InnSph.h = Direct.w.*Data.InnSph.h;
-Direct.InnSph.n = Direct.w(:,size(Data.Sph.n,2)).*Data.Sph.n(1:2:end,:);
-
-% Frequency Domain
-Direct.InnSph.H = fft(Direct.InnSph.h,2*Data.Nsamples)/Data.Nsamples;
-Direct.InnSph.H = [Direct.InnSph.H(1,:); 2*Direct.InnSph.H(2:end/2,:)];
-Direct.InnSph.N = fft(Direct.InnSph.n,2*Data.Nsamples)/Data.Nsamples;
-Direct.InnSph.N = [Direct.InnSph.N(1,:); 2*Direct.InnSph.N(2:end/2,:)];
-
-% Noise norm
-Direct.InnSph.Nnorm = mean(abs(Direct.InnSph.N),2);
-
-% True DOA
-Direct.DOA = Data.Sph.R0-Data.Source.pos;
-Direct.DOA = Direct.DOA/vecnorm(Direct.DOA);
-
-% Plot frequency response of mics [40, 59, 69]
-% figure, plot(Data.f*1e-3,20*log10(abs(Direct.InnSph.H(:,[40 59 69])))), grid on
-% xlabel('Frequency in kHz'), ylabel('Magnitude $|H(j\omega)|$ in dB')
-% legend('Mic 40','Mic 59','Mic 69')
-% applyAxisProperties(gca)
-% applyLegendProperties(gcf)
+figure
+s = surf(Data.Ref.pos(:,1),Plot.t*1e3,Plot.Ref.h);
+set(s,'edgecolor','none')
+xlabel('x in m'), ylabel('Time in ms')
+colormap hot
+view(2)
+c = colorbar;
+caxis([-0.04 0.04])
+applyColorbarProperties(c,'Room Impulse Response in Pa/V')
+applyAxisProperties(gca)
+clear s
 
 %% Dictionary of plane waves
 % Dictionary
-Dict.f = Data.f(320 <= Data.f & Data.f <= 400);
-Dict.f = Dict.f(1:50:end);
-% Dict.f = 2e2;                 % DOA estimation at 200 Hz
+Dict.f = Data.f(300 <= Data.f & Data.f <= 500);
+Dict.f = Dict.f(1:100:end);
+% Dict.f = 3e2;                 % DOA estimation at 300 Hz
 Dict.Plane.N = 1e3;             % Number of plane waves
 Dict.Plane.K = 1;               % Number of sources (SOMP)
 
 [Dict.Plane.H,Dict.Plane.uk] = dictionary(Dict.f,Data.InnSph.pos',Dict.Plane.N);
 
+%% ------------ DIRECT SOUND FIELD ------------
+% Time window: 5-10 ms
+Direct.T = 8*1e-3;     % Source near field
+% Direct.T = 22*1e-3;   % Source far field
+
+Direct = directWindow(Data,Direct);
+
 %% DOA Estimation via SOMP
-% DOA = dirDOA_SOMP(Data,Direct,Dict,'true');
+% Direct.DOA.SOMP = dirDOA_SOMP(Data,Direct,Dict,'true');
 
 %% DOA Estimation via Least-Squares
-% LS = dirDOA_LS(Data,Direct,Dict,'true');
+% Direct.DOA.LS = dirDOA_LS(Data,Direct,Dict,'true');
 
 %% DOA Estimation via Regularised Least-Squares
-% RLS = dirDOA_RLS(Data,Direct,Dict,'true');
+% Direct.DOA.RLS = dirDOA_RLS(Data,Direct,Dict,'true');
 % Nnorm = 1.685*10-6 via L-curve method
 Direct.InnSph.NnormLcurve = 1.685e-6;
 
 %% DOA Estimation via Compressive Sensing
-CS = dirDOA_CS(Data,Direct,Dict,'true');
+Direct.DOA.CS = dirDOA_CS(Data,Direct,Dict);
 
 %% Dictionary of spherical waves
-Dict.Sph.Res = 5e-2;
+Dict.Sph.Res = 0.1;
 Dict.Sph.rMinMax = [0.3 7];
 
 [Dict.Sph.H,Dict.Sph.r,Dict.Sph.N] = dictionaryRange(Dict.f,Data.InnSph.pos.',...
-    Data.Sph.R0.',CS.DOA.Avg.',Dict.Sph.rMinMax,Dict.Sph.Res);
+    Data.Sph.R0.',Direct.DOA.CS.Avg.',Dict.Sph.rMinMax,Dict.Sph.Res);
 
 %% Range Estimation via Regularised Least-Squares
-% RLS = dirRange_RLS(Data,Direct,RLS,Dict,'true');
+% Direct.Range.RLS = dirRange_RLS(Data,Direct,Dict,'true');
 
 %% Range Estimation via CS
-CS = dirRange_CS(Data,Direct,CS,Dict,'true');
+Direct.Range.CS = dirRange_CS(Data,Direct,Dict,'true');
 
-%% Range Estimation via Fused Total Generalised Variation - Laplacian/Stencil 3x3
-Dict.Grid.Res = [.5 .5];
-[Dict.Grid.H,Dict.Grid.rs,Dict.Grid.N,Dict.Grid.Nx,Dict.Grid.Ny] = ...
-    dictionaryGrid(Dict.f,Data.InnSph.pos,Data.Sph.R0.',Data.D,TV.Res(1),TV.Res(2));
+%% ------------ EARLY REFLECTIONS ------------
+% Time window: 10-20 ms
+Early.T = [8 20]*1e-3;     % Source near field
+
+Early = earlyWindow(Data,Early);
+Early.InnSph.NnormLcurve = 1.685e-6;
+
+%% DOA Estimation via Compressive Sensing
+% Early.DOA.CS = earlyDOA_CS(Data,Early,Dict,'true');
+
+%% DOA Estimation via Elastic Net
+% Early.DOA.EN = earlyDOA_EN(Data,Early,Dict,'true');
+
+%% DOA Estimation via Weighted LASSO
+Early.DOA.WL = earlyDOA_WL(Data,Early,Dict,'true');
+
+%% COMPARISON
+figure
+subplot(211), plot(abs(Early.DOA.CS.x)), grid on
+xlabel('DOA Index'), ylabel('Coefficients Magnitude'), title('Compressive Sensing')
+applyAxisProperties(gca)
+subplot(212), plot(abs(Early.DOA.EN.x)), grid on
+xlabel('DOA Index'), ylabel('Coefficients Magnitude'), title('Elastic Net')
+applyAxisProperties(gca)
+
+
+
 
 
 

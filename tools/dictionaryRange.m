@@ -52,4 +52,6 @@ end
 % Normalisation
 H = H./vecnorm(H,2,2);
 
+disp('Spherical Wave Dictionary... OK')
+
 end

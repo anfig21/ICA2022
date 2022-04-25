@@ -46,13 +46,15 @@ Early.InnSph.Nnorm = mean(abs(Early.InnSph.N),2);
 % applyLegendProperties(gcf)
 
 % Plot RIR Time domain
-% figure
-% subplot(211), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Data.InnSph.h)
-% xlim([5 35]), title('RIR')
-% applyAxisProperties(gca)
-% subplot(212), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Early.InnSph.h)
-% xlim([5 35]), title('Early Reflections')
-% applyAxisProperties(gca)
+figure
+subplot(211), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Data.InnSph.h), grid on
+xlim([5 35]), title('RIR')
+applyAxisProperties(gca)
+subplot(212), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Early.InnSph.h), grid on
+xlim([5 35]), title('Early Reflections')
+applyAxisProperties(gca)
+
+disp('Early Reflections: Windowing... OK')
 
 end
 

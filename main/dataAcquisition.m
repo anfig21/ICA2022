@@ -32,5 +32,7 @@ Data.Sph.p = h5read(Data.loudspeaker,'/dataset_sph1/pressure');
 Data.Sph.n = h5read(Data.loudspeaker,'/dataset_sph1/noise');
 Data.Sph.R0 = mean(Data.Sph.pos,1);
 
+disp('Reading data... OK')
+
 end
 

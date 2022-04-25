@@ -49,4 +49,5 @@ delete(c)
 % Normalisation
 H = H./vecnorm(H,2,2);
 
+disp('Plane Wave Dictionary... OK')
 end

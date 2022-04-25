@@ -54,6 +54,7 @@ Direct.TrueDOA = Direct.TrueDOA/vecnorm(Direct.TrueDOA);
 % xlim([5 35]), title('Direct Sound')
 % applyAxisProperties(gca)
 
+disp('Direct sound: Windowing... OK')
 
 end
 

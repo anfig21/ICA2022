@@ -45,5 +45,7 @@ if plotFlag
     applyLegendProperties(gcf)
 end
 
+disp('Direct sound: RANGE - RLS... OK')
+
 end
 

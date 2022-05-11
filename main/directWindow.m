@@ -35,7 +35,7 @@ Direct.InnSph.N = [Direct.InnSph.N(1,:); 2*Direct.InnSph.N(2:end/2,:)];
 Direct.InnSph.Nnorm = mean(abs(Direct.InnSph.N),2);
 
 % True DOA
-Direct.TrueDOA = Data.Sph.R0-Data.Source.pos;
+Direct.TrueDOA = Data.Source.pos-Data.Sph.R0;
 Direct.TrueDOA = Direct.TrueDOA/vecnorm(Direct.TrueDOA);
 
 % Plot frequency response of mics [40, 59, 69]
@@ -46,13 +46,13 @@ Direct.TrueDOA = Direct.TrueDOA/vecnorm(Direct.TrueDOA);
 % applyLegendProperties(gcf)
 
 % Plot RIR Time domain
-% figure
-% subplot(211), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Data.InnSph.h)
-% xlim([5 35]), title('RIR')
-% applyAxisProperties(gca)
-% subplot(212), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Direct.InnSph.h)
-% xlim([5 35]), title('Direct Sound')
-% applyAxisProperties(gca)
+figure
+subplot(211), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Data.InnSph.h), grid on
+xlim([5 35]), title('RIR'),
+applyAxisProperties(gca)
+subplot(212), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Direct.InnSph.h), grid on
+xlim([5 35]), title('Direct Sound'), xlabel('Time in ms')
+applyAxisProperties(gca)
 
 disp('Direct sound: Windowing... OK')
 

@@ -22,7 +22,7 @@ elseif nargin < 3, error('dirRange_CS Error: Not enough input parameters.'), end
 Range.Est = nan(3,length(Dict.f));
 Nnorm = 1.1*Direct.InnSph.NnormLcurve;
 
-c = waitbar(0,'Loading...0\%','Name','CVX across frequencies...');
+c = waitbar(0,'Loading...0\%','Name','dirRange_CS: CVX across frequencies...');
 for ii = 1:length(Dict.f)
     Hii = squeeze(Dict.Sph.H(:,:,ii));
     pii = Direct.InnSph.H(Data.f==Dict.f(ii),:).';

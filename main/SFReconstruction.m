@@ -83,9 +83,9 @@ clear s c
 
 %% Dictionary of plane waves
 % Dictionary
-Dict.f = Data.f(300 <= Data.f & Data.f <= 400);
-Dict.f = Dict.f(1:50:end);
-% Dict.f = 3e2;                 % DOA estimation at 300 Hz
+% Dict.f = Data.f(300 <= Data.f & Data.f <= 305);
+% Dict.f = Dict.f(1:50:end);
+Dict.f = 8e2;                 % DOA estimation at 300 Hz
 Dict.Plane.N = 1e3;             % Number of plane waves
 Dict.Plane.K = 1;               % Number of sources (SOMP)
 
@@ -105,12 +105,12 @@ Direct = directWindow(Data,Direct);
 % Direct.DOA.LS = dirDOA_LS(Data,Direct,Dict,'true');
 
 %% DOA Estimation via Regularised Least-Squares
-% Direct.DOA.RLS = dirDOA_RLS(Data,Direct,Dict,'true');
+Direct.DOA.RLS = dirDOA_RLS(Data,Direct,Dict,'true');
 % Nnorm = 1.685*10-6 via L-curve method
-Direct.InnSph.NnormLcurve = 1.685e-6;
+Direct.InnSph.NnormLcurve = 1.0605e-7;       % Varies with frequency
 
 %% DOA Estimation via Compressive Sensing
-Direct.DOA.CS = dirDOA_CS(Data,Direct,Dict);
+Direct.DOA.CS = dirDOA_CS(Data,Direct,Dict,'true');
 
 %% Dictionary of spherical waves
 Dict.Sph.Res = 0.1;
@@ -118,6 +118,7 @@ Dict.Sph.rMinMax = [0.3 7];
 
 [Dict.Sph.H,Dict.Sph.r,Dict.Sph.N] = dictionaryRange(Dict.f,Data.InnSph.pos.',...
     Data.Sph.R0.',Direct.DOA.CS.Avg.',Dict.Sph.rMinMax,Dict.Sph.Res);
+disp('Direct sound: Spherical Wave Dictionary... OK')
 
 %% Range Estimation via Regularised Least-Squares
 % Direct.Range.RLS = dirRange_RLS(Data,Direct,Dict,'true');
@@ -127,10 +128,12 @@ Direct.Range.CS = dirRange_CS(Data,Direct,Dict,'true');
 
 %% ------------ EARLY REFLECTIONS ------------
 % Time window: 10-20 ms
-Early.T = [8 20]*1e-3;     % Source near field
+% Early.T = [8 20]*1e-3;      % Source near field
+Early.T = [8 13]*1e-3;
 
 Early = earlyWindow(Data,Early);
-Early.InnSph.NnormLcurve = 1.685e-6;
+Early.R = 1;                % Number of early reflections
+Early.InnSph.NnormLcurve = 1e-6;
 
 %% DOA Estimation via Compressive Sensing
 % Early.DOA.CS = earlyDOA_CS(Data,Early,Dict,'true');
@@ -140,6 +143,28 @@ Early.InnSph.NnormLcurve = 1.685e-6;
 
 %% DOA Estimation via Weighted LASSO
 Early.DOA.WL = earlyDOA_WL(Data,Early,Dict,'true');
+
+%% Dictionary of spherical waves
+Dict.SphEarly.Res = 0.1;
+Dict.SphEarly.rMinMax = [0.7 7];
+
+% Dictionary per DOA
+for ii = 1:Early.R
+    [Dict.SphEarly.H{ii},Dict.SphEarly.r{ii},Dict.SphEarly.N{ii}] = dictionaryRange(Dict.f,Data.InnSph.pos.',...
+        Data.Sph.R0.',Early.DOA.WL.Est(:,ii).',Dict.SphEarly.rMinMax,Dict.SphEarly.Res);
+end
+clear ii
+disp('Early reflections: Spherical Wave Dictionary... OK')
+
+%% Range Estimation via Regularised Least-Squares
+Early.Range.RLS = earlyRange_RLS(Data,Early,Dict,'true');
+
+%% Range Estimation via CS
+Early.Range.CS = earlyRange_CS(Data,Early,Dict,'true');
+
+
+
+
 
 
 

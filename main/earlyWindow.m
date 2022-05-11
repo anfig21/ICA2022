@@ -51,7 +51,7 @@ subplot(211), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Data.InnSph.h), grid on
 xlim([5 35]), title('RIR')
 applyAxisProperties(gca)
 subplot(212), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Early.InnSph.h), grid on
-xlim([5 35]), title('Early Reflections')
+xlim([5 35]), title('Early Reflections'), xlabel('Time in ms')
 applyAxisProperties(gca)
 
 disp('Early Reflections: Windowing... OK')

@@ -24,7 +24,7 @@ elseif nargin < 3, error('dirDOA_SOMP Error: Not enough input parameters.'), end
 % SOMP
 DOA.x = somp(Dict.Plane.H, Direct.InnSph.H.', Dict.Plane.K);
 DOA.Idx = find(DOA.x,Dict.Plane.K);
-DOA.Est = Dict.Plane.uk(:,DOA.Idx);
+DOA.Est = -Dict.Plane.uk(:,DOA.Idx);
 
 if plotFlag
     uk = Dict.Plane.uk+Data.Sph.R0.';
@@ -34,7 +34,8 @@ if plotFlag
     scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
     scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3),200,'filled')
     scatter3(uk(1,:),uk(2,:),uk(3,:))
-    quiver3(Data.Sph.R0(1),Data.Sph.R0(2),Data.Sph.R0(3),-DOA.Est(1),-DOA.Est(2),-DOA.Est(3),2,'Linewidth',4)
+    quiver3(Data.Sph.R0(1),Data.Sph.R0(2),Data.Sph.R0(3),DOA.Est(1),DOA.Est(2),DOA.Est(3),2,'Linewidth',4)
+    axis equal
     axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
     xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
     legend('Reference Line','Spherical Array','Source')

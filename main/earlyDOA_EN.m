@@ -22,7 +22,7 @@ elseif nargin < 3, error('earlyDOA_EN Error: Not enough input parameters.'), end
 DOA.x = nan(Dict.Plane.N,length(Dict.f));
 Nnorm = 1.1*Early.InnSph.NnormLcurve;
 
-c = waitbar(0,'Loading...0\%','Name','CVX across frequencies...');
+c = waitbar(0,'Loading...0\%','Name','earlyDOA_EN: CVX across frequencies...');
 for ii = 1:length(Dict.f)
     Hii = squeeze(Dict.Plane.H(:,:,ii));
     pii = Early.InnSph.H(Data.f==Dict.f(ii),:).';

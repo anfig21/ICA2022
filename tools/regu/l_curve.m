@@ -130,7 +130,7 @@ if (locate)
 end
 
 % Make plot.
-if plotFlag
+%if plotFlag
     plot_lc(rho,eta,marker,ps,reg_param);
     if locate
         ax = axis;
@@ -141,5 +141,5 @@ if plotFlag
         axis(ax)
         if (~HoldState), hold off; end
     end
-end
+%end
 end

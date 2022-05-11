@@ -26,7 +26,7 @@ if nargin < 5, error('dictionaryRange Error: Not enough input parameters.'), end
 c = 343;
 
 % Position of the candidate sources
-rs = r0-uk'*(rMinMax(1):Res:rMinMax(2));
+rs = r0+uk'*(rMinMax(1):Res:rMinMax(2));
 
 N = size(rs,2);
 M = size(r,2);
@@ -46,12 +46,11 @@ end
 % Dictionary
 H = nan(M,N,Nf);
 for ff = 1:Nf
-    H(:,:,ff) = (1./d).*exp(-1i*d*k(ff));
+    H(:,:,ff) = (1./d).*exp(1i*d*k(ff));
+%     H(:,:,ff) = exp(1i*d*k(ff));
 end
 
 % Normalisation
 H = H./vecnorm(H,2,2);
-
-disp('Spherical Wave Dictionary... OK')
 
 end

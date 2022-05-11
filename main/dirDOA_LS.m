@@ -25,7 +25,7 @@ for ii = 1:length(Dict.f)
     x = pinv(Dict.Plane.H(:,:,ii))*Direct.InnSph.H(Data.f==Dict.f(ii),:).';
     
     [~,Idx] = max(abs(x));
-    DOA.Est(:,ii) = Dict.Plane.uk(:,Idx);
+    DOA.Est(:,ii) = -Dict.Plane.uk(:,Idx);
 end
 
 DOA.Error = vecnorm(Direct.TrueDOA.'-DOA.Est);
@@ -44,7 +44,8 @@ if plotFlag
     scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
     scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
     scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3),200,'filled')
-    quiver3(Data.Sph.R0(1),Data.Sph.R0(2),Data.Sph.R0(3),-DOA.Avg(1),-DOA.Avg(2),-DOA.Avg(3),2,'Linewidth',4)
+    quiver3(Data.Sph.R0(1),Data.Sph.R0(2),Data.Sph.R0(3),DOA.Avg(1),DOA.Avg(2),DOA.Avg(3),2,'Linewidth',4)
+    axis equal
     axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
     xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
     legend('Reference Line','Spherical Array','Source')

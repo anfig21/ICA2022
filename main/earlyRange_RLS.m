@@ -21,7 +21,6 @@ elseif nargin < 3, error('earlyRange_RLS Error: Not enough input parameters.'), 
 
 %% MAIN CODE
 %Range.Est = nan(3,length(Dict.f));
-Nnorm = 1.1*Early.InnSph.NnormLcurve;
 
 for rr = 1:Early.R
     for ii = 1:length(Dict.f)
@@ -54,7 +53,7 @@ if plotFlag
     scatter3(aux(1,:),aux(2,:),aux(3,:),100,'filled','MarkerEdgeColor','k')
     for rr = 1:Early.R, scatter3(Range.Avg{rr}(1),Range.Avg{rr}(2),Range.Avg{rr}(3),170,'filled'), end
     for rr = 1:Early.R, scatter3(Dict.SphEarly.r{rr}(1,:),Dict.SphEarly.r{rr}(2,:),Dict.SphEarly.r{rr}(3,:)), end
-    drawRoom(Data.D(1),Data.D(2),Data.D(3))
+    drawRoom(Data.D(1),Data.D(2),Data.D(3)), axis equal
     xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
     legend('Spherical Array','Source','DOAs','Estimation')
     applyAxisProperties(gca)

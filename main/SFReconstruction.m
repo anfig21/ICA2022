@@ -92,16 +92,16 @@ clear s c
 
 %% Dictionary of plane waves
 % Dictionary
-Dict.f = Data.f(6e2 <= Data.f & Data.f <= 1e3);
-Dict.f = Dict.f(1:50:end);
+% Dict.f = Data.f(6e2 <= Data.f & Data.f <= 1e3);
+% Dict.f = Dict.f(1:50:end);
 % Dict.f = Dict.f(1:20:end);
-% Dict.f = 8e2;                   % DOA estimation at 800 Hz
+Dict.f = 8e2;                   % DOA estimation at 800 Hz
 Dict.Plane.N = 1e3;             % Number of plane waves
 Dict.Plane.K = 1;               % Number of sources (SOMP)
 
 [Dict.Plane.H,Dict.Plane.uk] = dictionary(Data.c,Dict.f,Data.InnSph.pos',Dict.Plane.N);
 
-%% ------------ DIRECT SOUND FIELD ------------
+%% ------------ DIRECT SOUND FIELD ------------ %%
 % Time window: 5-10 ms
 Direct.T = 8*1e-3;     % Source near field
 % Direct.T = 22*1e-3;   % Source far field
@@ -115,7 +115,7 @@ Direct = directWindow(Data,Direct);
 % Direct.DOA.LS = dirDOA_LS(Data,Direct,Dict,'true');
 
 %% DOA Estimation via Regularised Least-Squares
-Direct.DOA.RLS = dirDOA_RLS(Data,Direct,Dict,'true');
+% Direct.DOA.RLS = dirDOA_RLS(Data,Direct,Dict,'true');
 % Nnorm = 1.685*10-6 via L-curve method
 % Direct.InnSph.NnormLcurve = 1.0605e-7;       % Varies with frequency
 
@@ -135,59 +135,65 @@ Dict.Sph.rMinMax = [0.3 3];
 disp('Direct sound: Spherical Wave Dictionary... OK')
 
 %% Range Estimation via Regularised Least-Squares
-Direct.Range.RLS = dirRange_RLS(Data,Direct,Dict,'true');
+% Direct.Range.RLS = dirRange_RLS(Data,Direct,Dict,'true');
 % Direct.InnSph.NnormLcurve = 6.8e-4;       % Varies with frequency
 
 %% Range Estimation via CS
-Direct.Range.CS = dirRange_CS(Data,Direct,Dict,'true');
+% Direct.Range.CS = dirRange_CS(Data,Direct,Dict,'true');
 
 %% Range Estimation via EN
-Direct.Range.EN = dirRange_EN(Data,Direct,Dict,'true');
+% Direct.Range.EN = dirRange_EN(Data,Direct,Dict,'true');
 
 %% Range Estimation via TV
 Direct.Range.TV = dirRange_TV(Data,Direct,Dict,'true');
 % figure, plot(Dict.f,Direct.Range.TV.Error), grid on
 % OPTIMAL IDX: 19
 
-%% ------------ EARLY REFLECTIONS ------------
-% Time window: 10-20 ms
-Early.T = [8 10]*1e-3;      % Source near field
+%% ------------ EARLY REFLECTIONS ------------ %%
+Early.totT = [8 10; 11 15; 16 18]*1e-3;
+Early.totR = 3;
 
-Early = earlyWindow(Data,Early);
-Early.R = 1;                % Number of early reflections
-
-%% DOA Estimation via Compressive Sensing
-% Early.DOA.CS = earlyDOA_CS(Data,Early,Dict,'true');
-
-%% DOA Estimation via Elastic Net
-% Early.DOA.EN = earlyDOA_EN(Data,Early,Dict,'true');   % DOES NOT WORK
-
-%% DOA Estimation via Weighted LASSO
-Early.DOA.WL = earlyDOA_WL(Data,Early,Dict,'true');
-
-%% Dictionary of spherical waves
-Dict.SphEarly.Res = 0.1;
-Dict.SphEarly.rMinMax = [0.7 7];
-
-% Dictionary per DOA
-for ii = 1:Early.R
-    [Dict.SphEarly.H{ii},Dict.SphEarly.r{ii},Dict.SphEarly.N{ii}] = dictionaryRange(Data.c,Dict.f,Data.InnSph.pos.',...
-        Data.Sph.R0.',Early.DOA.WL.Est(:,ii).',Dict.SphEarly.rMinMax,Dict.SphEarly.Res);
+for ii = 1:Early.totR
+    % Time window: 10-20 ms
+    %     Early.T = [8 18]*1e-3;      % Source near field
+    Early.T = Early.totT(ii,:);
+    
+    Early = earlyWindow(Data,Early);
+    Early.R = 1;                % Number of early reflections
+    
+    %% DOA Estimation via Compressive Sensing
+    Early.DOA.CS{ii} = earlyDOA_CS(Data,Early,Dict,'true');     % OUTPERFORMS LASSO
+    
+    %% DOA Estimation via Elastic Net
+    % Early.DOA.EN = earlyDOA_EN(Data,Early,Dict,'true');   % DOES NOT WORK
+    
+    %% DOA Estimation via Weighted LASSO
+    % Early.DOA.WL = earlyDOA_WL(Data,Early,Dict,'true');
+    
+    %% Dictionary of spherical waves
+    Dict.SphEarly.Res = 0.1;
+    Dict.SphEarly.rMinMax = [1 5];
+    
+    % Dictionary per DOA
+    
+    [Dict.SphEarly.H{1},Dict.SphEarly.r{1},Dict.SphEarly.N{1}] = dictionaryRange(Data.c,Dict.f,Data.InnSph.pos.',...
+        Data.Sph.R0.',Early.DOA.CS{ii}.Est.',Dict.SphEarly.rMinMax,Dict.SphEarly.Res);
+    
+    
+    %% Range Estimation via Regularised Least-Squares
+    % Early.Range.RLS = earlyRange_RLS(Data,Early,Dict,'true');
+    
+    %% Range Estimation via CS
+    % Early.Range.CS = earlyRange_CS(Data,Early,Dict,'true');
+    
+    %% Range Estimation via TV
+    Early.Range.TV = earlyRange_TV(Data,Early,Dict,'true');
+    
 end
 clear ii
 disp('Early reflections: Spherical Wave Dictionary... OK')
 
-%% Range Estimation via Regularised Least-Squares
-Early.Range.RLS = earlyRange_RLS(Data,Early,Dict,'true');
-
-%% Range Estimation via CS
-Early.Range.CS = earlyRange_CS(Data,Early,Dict,'true');
-
-
-
-
-
-
+%% ------------ PLANE WAVE EXPANSION ------------ %%
 
 
 

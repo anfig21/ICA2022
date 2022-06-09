@@ -1,6 +1,6 @@
-function Range = earlyRange_CS(Data,Early,Dict,plotFlag)
-%Range = earlyRange_CS(Data,Early,Dict,plotFlag) Applies Compressive
-%Sensing to the early reflections to obtain the position of the source.
+function Range = earlyRange_TV(Data,Early,Dict,plotFlag)
+%Range = earlyRange_TV(Data,Direct,Dict,plotFlag) Applies Total Variation to
+%the early reflections to obtain the position of the source
 %   Input:
 %       - Data      : raw data. Structure
 %       - Early     : early reflections. Structure
@@ -8,33 +8,47 @@ function Range = earlyRange_CS(Data,Early,Dict,plotFlag)
 %       - plotFlag  : 'true' to plot setup & DOA estimation
 %                     'false' to avoid plotting. Default value
 %   Output:
-%       - Range     : Range estimation via via CS. Structure
+%       - Range        : Range estimation via TV. Structure
 %
 % Author: Antonio Figueroa Durán
-% Date: April 2022
+% Date: May 2022
 
 %% ERROR HANDLING
 % plotFlag default value
 if nargin < 4, plotFlag = false;
-elseif nargin < 3, error('earlyRange_CS Error: Not enough input parameters.'), end
+elseif nargin < 3, error('earlyRange_TV Error: Not enough input parameters.'), end
 
 %% MAIN CODE
-%Range.Est = nan(3,length(Dict.f));
 NoiseMargin = 10;           % dB
 
-c = waitbar(0,'Loading...0\%','Name','earlyRange_CS: CVX across frequencies...');
+% Stencil
+% st = 3; mask = [1; -1; 0];        % First order
+st = 3; mask = [1; -2; 1];        % Second order
+% st = 3; mask = [0.5; -1; 0.5];    % Weighted Second order
+
+% st = 5; mask = [0.5; 1; -3; 1; 0.5];  % Fourth order
+
+c = waitbar(0,'Loading...0\%','Name','earlyRange_TV: CVX across frequencies...');
 cc = 0;
 for rr = 1:Early.R
+    Mask = padarray(mask, Dict.SphEarly.N{rr}-st,'post');
+    M = circshift(Mask(:),Dict.SphEarly.N{rr}-(st-1)/2);
+    D = zeros(Dict.SphEarly.N{rr});
+    for ii=1:Dict.SphEarly.N{rr}
+        D(ii,:)=circshift(M.',[0 ii-1]);
+    end
+    
     for ii = 1:length(Dict.f)
         Nnorm = 10^(NoiseMargin/20)*Early.InnSph.Nnorm(Data.f==Dict.f(ii));
         Hii = squeeze(Dict.SphEarly.H{rr}(:,:,ii));
         pii = Early.InnSph.H(Data.f==Dict.f(ii),:).';
+        %     pii = unwrap(angle(pii));
         
         % CVX Formulation
         cvx_begin quiet
         cvx_precision high
         variable x(Dict.SphEarly.N{rr}) complex;
-        minimize norm(x,1);
+        minimize norm(D*x,1);
         subject to
         norm((Hii*x-pii),2) <= Nnorm;
         cvx_end
@@ -52,30 +66,27 @@ for rr = 1:Early.R
         waitbar(cc/(length(Dict.f)*Early.R),c,strcat("Loading... ",...
             string(round(100*cc/(length(Dict.f)*Early.R),2)),"\,\%"));
     end
-    
     Range.Avg{rr} = mode(Range.Est{rr},2);
+    
 end
 delete(c)
 
 %% PLOT
-if plotFlag
-    aux = Early.DOA.WL.Est+Data.Sph.R0.';
-    
+if plotFlag    
     figure
     %scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3))
     scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3)), hold on
     scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3),200,'filled')
-    scatter3(aux(1,:),aux(2,:),aux(3,:),100,'filled','MarkerEdgeColor','k')
     for rr = 1:Early.R, scatter3(Range.Avg{rr}(1),Range.Avg{rr}(2),Range.Avg{rr}(3),170,'filled'), end
     for rr = 1:Early.R, scatter3(Dict.SphEarly.r{rr}(1,:),Dict.SphEarly.r{rr}(2,:),Dict.SphEarly.r{rr}(3,:)), end
     drawRoom(Data.D(1),Data.D(2),Data.D(3)), axis equal
     xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
-    legend('Spherical Array','Source','DOAs','Estimation')
+    legend('Spherical Array','Source','Estimation')
     applyAxisProperties(gca)
     applyLegendProperties(gcf)
 end
 
-disp('Early reflections: RANGE - CS... OK')
+disp('Early reflections: RANGE - TV... OK')
 
 end
 

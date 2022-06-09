@@ -8,7 +8,7 @@ function Range = dirRange_TV(Data,Direct,Dict,plotFlag)
 %       - plotFlag  : 'true' to plot setup & DOA estimation
 %                     'false' to avoid plotting. Default value
 %   Output:
-%       - Range        : Range estimation via via TV. Structure
+%       - Range        : Range estimation via TV. Structure
 %
 % Author: Antonio Figueroa Durán
 % Date: May 2022

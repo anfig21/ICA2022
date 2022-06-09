@@ -1,6 +1,6 @@
-function Range = dirRange_CS(Data,Direct,Dict,plotFlag)
-%Range = dirRange_CS(Data,Direct,Dict,plotFlag) Applies Compressive
-%Sensing to the Direct Sound Field to obtain the position of the source.
+function Range = dirRange_TV(Data,Direct,Dict,plotFlag)
+%Range = dirRange_TV(Data,Direct,Dict,plotFlag) Applies Total Variation to
+%the Direct Sound Field to obtain the position of the source.
 %   Input:
 %       - Data      : raw data. Structure
 %       - Direct    : direct sound field. Structure
@@ -8,21 +8,35 @@ function Range = dirRange_CS(Data,Direct,Dict,plotFlag)
 %       - plotFlag  : 'true' to plot setup & DOA estimation
 %                     'false' to avoid plotting. Default value
 %   Output:
-%       - Range        : Range estimation via via CS. Structure
+%       - Range        : Range estimation via via TV. Structure
 %
 % Author: Antonio Figueroa Durán
-% Date: March 2022
+% Date: May 2022
 
 %% ERROR HANDLING
 % plotFlag default value
 if nargin < 4, plotFlag = false;
-elseif nargin < 3, error('dirRange_CS Error: Not enough input parameters.'), end
+elseif nargin < 3, error('dirRange_TV Error: Not enough input parameters.'), end
 
 %% MAIN CODE
 Range.Est = nan(3,length(Dict.f));
 NoiseMargin = 10;           % dB
 
-c = waitbar(0,'Loading...0\%','Name','dirRange_CS: CVX across frequencies...');
+% Stencil
+% st = 3; mask = [1; -1; 0];        % First order
+st = 3; mask = [1; -2; 1];        % Second order
+% st = 3; mask = [0.5; -1; 0.5];    % Weighted Second order
+
+% st = 5; mask = [0.5; 1; -3; 1; 0.5];  % Fourth order
+
+Mask = padarray(mask, Dict.Sph.N-st,'post');
+M = circshift(Mask(:),Dict.Sph.N-(st-1)/2);
+D = zeros(Dict.Sph.N);
+for ii=1:Dict.Sph.N
+    D(ii,:)=circshift(M.',[0 ii-1]);
+end
+
+c = waitbar(0,'Loading...0\%','Name','dirRange_TV: CVX across frequencies...');
 for ii = 1:length(Dict.f)
     Nnorm = 10^(NoiseMargin/20)*Direct.InnSph.Nnorm(Data.f==Dict.f(ii));
     Hii = squeeze(Dict.Sph.H(:,:,ii));
@@ -33,7 +47,7 @@ for ii = 1:length(Dict.f)
     cvx_begin quiet
     cvx_precision high
     variable x(Dict.Sph.N) complex;
-    minimize norm(x,1);
+    minimize norm(D*x,1);
     subject to
     norm((Hii*x-pii),2) <= Nnorm;
     cvx_end
@@ -57,7 +71,7 @@ if plotFlag
     stem(abs(x)), grid on
     xlabel('Wave Index'), ylabel('Coefficients Amplitude')
     applyAxisProperties(gca)
-
+    
     figure
     scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
     scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
@@ -73,7 +87,7 @@ if plotFlag
     applyLegendProperties(gcf)
 end
 
-disp('Direct sound: RANGE - CS... OK')
+disp('Direct sound: RANGE - TV... OK')
 
 end
 

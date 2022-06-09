@@ -38,6 +38,7 @@ if plotFlag
     scatter3(Dict.Sph.r(1,:),Dict.Sph.r(2,:),Dict.Sph.r(3,:))
     scatter3(Range.Est(1,:),Range.Est(2,:),Range.Est(3,:),150,'filled')
     scatter3(Range.Avg(1),Range.Avg(2),Range.Avg(3),150,'filled')
+    axis equal
     axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
     xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
     legend('Reference Line','Spherical Array','Source','Atoms','Estimation','Mean')

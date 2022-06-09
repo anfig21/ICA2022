@@ -20,10 +20,11 @@ elseif nargin < 3, error('earlyDOA_CS Error: Not enough input parameters.'), end
 
 %% MAIN CODE
 DOA.x = nan(Dict.Plane.N,length(Dict.f));
-Nnorm = 1.1*Early.InnSph.NnormLcurve;
+NoiseMargin = 10;           % dB
 
 c = waitbar(0,'Loading...0\%','Name','earlyDOA_CS: CVX across frequencies...');
 for ii = 1:length(Dict.f)
+    Nnorm = 10^(NoiseMargin/20)*Early.InnSph.Nnorm(Data.f==Dict.f(ii));
     Hii = squeeze(Dict.Plane.H(:,:,ii));
     pii = Early.InnSph.H(Data.f==Dict.f(ii),:).';
     
@@ -43,6 +44,12 @@ for ii = 1:length(Dict.f)
 end
 delete(c)
 
+x = sum(abs(DOA.x),2);
+uk = Dict.Plane.uk+Data.Sph.R0.';
+[~,Idx] = maxk(abs(x),Early.R);
+DOA.Est = -Dict.Plane.uk(:,Idx);
+ukEst = -Dict.Plane.uk(:,Idx)+Data.Sph.R0.';
+
 %% PLOT
 if plotFlag
     if length(Dict.f) == 1
@@ -51,24 +58,20 @@ if plotFlag
         stem(abs(DOA.x)), grid on
         xlabel('Wave Index'), ylabel('Coefficients Amplitude')
         applyAxisProperties(gca)
-        
-        % Dictionary candidates
-        uk = Dict.Plane.uk+Data.Sph.R0.';
-        [~,Idx] = maxk(abs(DOA.x),Early.R);
-        ukEst = Dict.Plane.uk(:,Idx)+Data.Sph.R0.';
-        
-        figure
-        scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
-        scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
-        scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3),200,'filled')
-        scatter3(uk(1,:),uk(2,:),uk(3,:),'MarkerEdgeColor', uint8([200 200 200]))
-        scatter3(ukEst(1,:),ukEst(2,:),ukEst(3,:),100,'filled','MarkerEdgeColor','k')
-        axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
-        xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
-        legend('Reference Line','Spherical Array','Source','Dictionary Atoms','DOA Estimations')
-        applyAxisProperties(gca)
-        applyLegendProperties(gcf)
     end
+    
+    figure
+    scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
+    scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
+    scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3),200,'filled')
+    scatter3(uk(1,:),uk(2,:),uk(3,:),'MarkerEdgeColor', uint8([200 200 200]))
+    scatter3(ukEst(1,:),ukEst(2,:),ukEst(3,:),100,'filled','MarkerEdgeColor','k')
+    axis equal
+    axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
+    xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
+    legend('Reference Line','Spherical Array','Source','Dictionary Atoms','DOA Estimations')
+    applyAxisProperties(gca)
+    applyLegendProperties(gcf)
 end
 
 disp('Early Reflections: DOA - CS... OK')

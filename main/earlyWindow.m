@@ -17,7 +17,7 @@ h = hann(2*NHann);
 hHalf1 = h(1:end/2);
 hHalf2 = h(end/2+1:end);
 
-Early.N = Data.Fs*Early.T;
+Early.N = floor(Data.Fs*Early.T);
 Early.Nsamples = Early.N(2)-Early.N(1);
 
 % Windowing - 1/2 Hanning (hann) window on each side

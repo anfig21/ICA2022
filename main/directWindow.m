@@ -18,17 +18,17 @@ hHalf = h(end/2+1:end);
 Direct.Nsamples = Data.Fs*Direct.T;
 
 % Windowing - 1/2 Hanning (hann) window on each side
-Direct.w = vertcat(ones(Direct.Nsamples-NHann,Data.InnSph.M),...
+Direct.w = vertcat(ones(Direct.Nsamples*2-NHann,Data.InnSph.M),...
     repmat(hHalf,1,Data.InnSph.M),...
-    zeros(Data.Nsamples-Direct.Nsamples,Data.InnSph.M));
+    zeros(Data.Nsamples*2-Direct.Nsamples*2,Data.InnSph.M));
 
-Direct.InnSph.h = Direct.w.*Data.InnSph.h;
-Direct.InnSph.n = Direct.w(:,size(Data.Sph.n,2)).*Data.Sph.n(1:2:end,:);
+Direct.InnSph.h = Direct.w(1:2:end,:).*Data.InnSph.h;      % Signal windowing
+Direct.InnSph.n = Direct.w(:,size(Data.Sph.n,2)).*Data.Sph.n;    % Noise windowing (samples x2)
 
 % Frequency Domain
-Direct.InnSph.H = fft(Direct.InnSph.h,2*Data.Nsamples)/Data.Nsamples;
+Direct.InnSph.H = fft(Direct.InnSph.h,2*Data.Nsamples)/(2*Data.Nsamples);
 Direct.InnSph.H = [Direct.InnSph.H(1,:); 2*Direct.InnSph.H(2:end/2,:)];
-Direct.InnSph.N = fft(Direct.InnSph.n,2*Data.Nsamples)/Data.Nsamples;
+Direct.InnSph.N = fft(Direct.InnSph.n,2*Data.Nsamples)/(2*Data.Nsamples);
 Direct.InnSph.N = [Direct.InnSph.N(1,:); 2*Direct.InnSph.N(2:end/2,:)];
 
 % Noise norm
@@ -46,13 +46,13 @@ Direct.TrueDOA = Direct.TrueDOA/vecnorm(Direct.TrueDOA);
 % applyLegendProperties(gcf)
 
 % Plot RIR Time domain
-figure
-subplot(211), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Data.InnSph.h), grid on
-xlim([5 35]), title('RIR'),
-applyAxisProperties(gca)
-subplot(212), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Direct.InnSph.h), grid on
-xlim([5 35]), title('Direct Sound'), xlabel('Time in ms')
-applyAxisProperties(gca)
+% figure
+% subplot(211), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Data.InnSph.h), grid on
+% xlim([5 35]), title('RIR'),
+% applyAxisProperties(gca)
+% subplot(212), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Direct.InnSph.h), grid on
+% xlim([5 35]), title('Direct Sound'), xlabel('Time in ms')
+% applyAxisProperties(gca)
 
 disp('Direct sound: Windowing... OK')
 

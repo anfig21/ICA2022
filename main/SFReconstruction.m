@@ -106,7 +106,11 @@ Dict.Plane.K = 1;               % Number of sources (SOMP)
 Direct.T = 8*1e-3;     % Source near field
 % Direct.T = 22*1e-3;   % Source far field
 
-Direct = directWindow(Data,Direct);
+Direct = windowRIR(Data,0,Direct.T);
+
+% True DOA
+Direct.TrueDOA = Data.Source.pos-Data.Sph.R0;
+Direct.TrueDOA = Direct.TrueDOA/vecnorm(Direct.TrueDOA);
 
 %% DOA Estimation via SOMP
 % Direct.DOA.SOMP = dirDOA_SOMP(Data,Direct,Dict,'true');
@@ -150,15 +154,15 @@ Direct.Range.TV = dirRange_TV(Data,Direct,Dict,'true');
 % OPTIMAL IDX: 19
 
 %% ------------ EARLY REFLECTIONS ------------ %%
-Early.totT = [8 10; 11 15; 16 18]*1e-3;
+TotT = [8 10; 11 15; 16 18]*1e-3;
 Early.totR = 3;
 
 for ii = 1:Early.totR
     % Time window: 10-20 ms
     %     Early.T = [8 18]*1e-3;      % Source near field
-    Early.T = Early.totT(ii,:);
+    Early.T = TotT(ii,:);
     
-    Early = earlyWindow(Data,Early);
+    Early = windowRIR(Data,Early.T(1),Early.T(2));
     Early.R = 1;                % Number of early reflections
     
     %% DOA Estimation via Compressive Sensing
@@ -194,6 +198,40 @@ clear ii
 disp('Early reflections: Spherical Wave Dictionary... OK')
 
 %% ------------ PLANE WAVE EXPANSION ------------ %%
+PWE.T = 30*1e-3;     % Source near field
+
+PWE = windowRIR(Data,0,PWE.T);
+
+Dict.PWE.N = 1e3;    % Number of plane waves
+PWE.f = Data.f(0 <= Data.f & Data.f <= 1e3);
+PWE.f = PWE.f(1:50:end);
+
+[Dict.PWE.H,~] = dictionary(Data.c,PWE.f,Data.InnSph.pos',Dict.PWE.N);
+
+%% Coefficient estimation
+PWE.x = nan(Dict.PWE.N,length(PWE.f));
+for ii = 1:length(PWE.f)
+    [PWE.x(:,ii),~] = reguLeastSquares(squeeze(Dict.PWE.H(:,:,ii)),Direct.InnSph.H(Data.f==PWE.f(ii),:).');
+end
+Dict.PWE = rmfield(Dict.PWE,'H');
+
+%% Reconstruction
+[Dict.PWE.HR,~] = dictionary(Data.c,PWE.f,Data.Ref.pos',Dict.PWE.N);
+
+PWE.P = nan(size(Data.Ref.pos,1),length(PWE.f));
+for ii = 1:length(PWE.f)
+    PWE.P(:,ii) = squeeze(Dict.PWE.HR(:,:,ii))*PWE.x(:,ii);
+end
+Dict.PWE = rmfield(Dict.PWE,'HR');
+
+%% Inverse Fourier Transform
+% Double-sided spectrum
+PWE.P2 = [real(PWE.P(:,1)) PWE.P(:,2:end-1)/2 PWE.P(:,end)];
+PWE.P2 = [PWE.P2 flip(conj(PWE.P2(:,2:end-1)),2)]*(2*Data.Nsamples);
+PWE.p = ifft(PWE.P2,[],2,'symmetric');
+
+
+
 
 
 

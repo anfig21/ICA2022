@@ -20,11 +20,12 @@ addpath(genpath('M:\Data'))                             % Windows 10
 loadPlotParams
 
 %% INITIAL PARAMETERS
-Data.T = 5;
+Data.T = 1;                         % Pre-processing T = 1 s
 Data.Fs = 48e3;
 Data.D = [6.266,9.357,2.977];       % Room dimensions
 Data.Nsamples = Data.Fs*Data.T;
-Data.f = Data.Fs/Data.Nsamples*(0:Data.Nsamples-1)/2;
+Data.f2 = Data.Fs/Data.Nsamples*(-Data.Nsamples/2:Data.Nsamples/2-1);
+Data.f = Data.f2(end/2+1:end);
 Data.Temp = 23.2;
 Data.Humi = 34.7;
 Data.p0 = 100658;
@@ -39,119 +40,42 @@ Data.loudspeaker = 'rir_019_spk1.h5';
 Data = dataAcquisition(Data);
 
 %% DATA HANDLING
-Data.Ref.pos = vertcat(Data.Line1.pos,Data.Line2.pos,Data.Line3.pos);
-Data.Ref.h = horzcat(Data.Line1.h,Data.Line2.h,Data.Line3.h);
-Data.Ref.n = horzcat(Data.Line1.n,Data.Line2.n,Data.Line3.n);
-
-% Inner Sphere (156 Microphones: samples 155-end)
-Idx = 155:size(Data.Sph.pos,1);
-Data.InnSph.M = length(Idx);
-
-% Random sampling (N = 150)
-% Data.InnSph.M = 150;
-% Idx = randperm(size(Data.Sph.pos,1),Data.InnSph.M);
-
-Data.InnSph.pos = Data.Sph.pos(Idx,:);
-Data.InnSph.h = Data.Sph.h(:,Idx);
-Data.InnSph.p = Data.Sph.p(:,Idx);
-
-% Frequency domain
-Data.InnSph.H = fft(Data.InnSph.h,2*Data.Nsamples)/(2*Data.Nsamples);
-Data.InnSph.H = [Data.InnSph.H(1,:); 2*Data.InnSph.H(2:end/2,:)];
-Data.InnSph.P = fft(Data.InnSph.p,2*Data.Nsamples)/(2*Data.Nsamples);
-Data.InnSph.P = [Data.InnSph.P(1,:); 2*Data.InnSph.P(2:end/2,:)];
-Data.Sph.N = fft(Data.Sph.n,2*Data.Nsamples)/(2*Data.Nsamples);
-Data.Sph.N = [Data.Sph.N(1,:); 2*Data.Sph.N(2:end/2,:)];
+Data = dataHandling(Data);
 
 %% SETUP PLOT
-Plot.T = [5 25]*1e-3;       % Source near field
-% Plot.T = [15 35]*1e-3;    % Source far field
-Plot.N = Data.Fs*Plot.T;
-
-% Time vector
-Plot.t = Plot.T(1):1/Data.Fs:Plot.T(2)-(1/Data.Fs);
-
-% Data downsizing
-Plot.Ref.h = Data.Ref.h(Plot.N(1):Plot.N(2)-1,:);
-Plot.InnSph.h = Data.InnSph.h(Plot.N(1):Plot.N(2)-1,:);
-
-% plotFreqResponse(Data)
-
-% REFERENCE LINE RIR PLOT
-figure
-s = surf(Data.Ref.pos(:,1),Plot.t*1e3,Plot.Ref.h);
-set(s,'edgecolor','none')
-xlabel('x in m'), ylabel('Time in ms')
-colormap hot
-view(2)
-c = colorbar;
-caxis([-0.04 0.04])
-applyColorbarProperties(c,'Room Impulse Response in Pa/V')
-applyAxisProperties(gca)
-clear s c
-
-%% Dictionary of plane waves
-% Dictionary
-% Dict.f = Data.f(6e2 <= Data.f & Data.f <= 1e3);
-% Dict.f = Dict.f(1:50:end);
-% Dict.f = Dict.f(1:20:end);
-Dict.f = 8e2;                   % DOA estimation at 800 Hz
-Dict.Plane.N = 1e3;             % Number of plane waves
-Dict.Plane.K = 1;               % Number of sources (SOMP)
-
-[Dict.Plane.H,Dict.Plane.uk] = dictionary(Data.c,Dict.f,Data.InnSph.pos',Dict.Plane.N);
+% Flags
+% - Setup
+% - Frequency response
+% - RIR reference line
+Plot = setupPlot(Data,false,false,false);
 
 %% ------------ DIRECT SOUND FIELD ------------ %%
-% Time window: 5-10 ms
-Direct.T = 8*1e-3;     % Source near field
-% Direct.T = 22*1e-3;   % Source far field
+% Parameters:
+% Resolution SWs
+% Range SWs
+% Range Method
+
+%% Windowing
+Direct.T = 8*1e-3;      % Source near field
+% Direct.T = 22*1e-3;     % Source far field
 
 Direct = windowRIR(Data,0,Direct.T);
 
-% True DOA
-Direct.TrueDOA = Data.Source.pos-Data.Sph.R0;
-Direct.TrueDOA = Direct.TrueDOA/vecnorm(Direct.TrueDOA);
+%% DOA Estimation
+N = 1e3;                % Number of plane waves
+DOAMethod = 'RLS';      % DOA Estimation Method
+Direct.f = Data.f(6e2 <= Data.f & Data.f <= 2e3);
 
-%% DOA Estimation via SOMP
-% Direct.DOA.SOMP = dirDOA_SOMP(Data,Direct,Dict,'true');
+Direct = directSoundDOA(Data,Direct,N,Direct.f,DOAMethod,true);
+clear N DOAMethod
 
-%% DOA Estimation via Least-Squares
-% Direct.DOA.LS = dirDOA_LS(Data,Direct,Dict,'true');
+%% Range Estimation
+res = 0.1;
+rMinMax = [0.3 6];
+RangeMethod = 'TV';    % Range Estimation Method
 
-%% DOA Estimation via Regularised Least-Squares
-% Direct.DOA.RLS = dirDOA_RLS(Data,Direct,Dict,'true');
-% Nnorm = 1.685*10-6 via L-curve method
-% Direct.InnSph.NnormLcurve = 1.0605e-7;       % Varies with frequency
-
-%% DOA Estimation via Compressive Sensing
-Direct.DOA.CS = dirDOA_CS(Data,Direct,Dict,'true');
-
-%% Dictionary of spherical waves
-Dict.Sph.Res = 0.1;
-Dict.Sph.rMinMax = [0.3 3];
-
-[Dict.Sph.H,Dict.Sph.r,Dict.Sph.N] = dictionaryRange(Data.c,Dict.f,Data.InnSph.pos.',...
-    Data.Sph.R0.',Direct.DOA.CS.Avg.',Dict.Sph.rMinMax,Dict.Sph.Res);
-
-% [Dict.Sph.H,Dict.Sph.r,Dict.Sph.N] = dictionaryRange(Data.c,Dict.f,Data.InnSph.pos.',...
-%     Data.Sph.R0.',Direct.TrueDOA,Dict.Sph.rMinMax,Dict.Sph.Res);
-
-disp('Direct sound: Spherical Wave Dictionary... OK')
-
-%% Range Estimation via Regularised Least-Squares
-% Direct.Range.RLS = dirRange_RLS(Data,Direct,Dict,'true');
-% Direct.InnSph.NnormLcurve = 6.8e-4;       % Varies with frequency
-
-%% Range Estimation via CS
-% Direct.Range.CS = dirRange_CS(Data,Direct,Dict,'true');
-
-%% Range Estimation via EN
-% Direct.Range.EN = dirRange_EN(Data,Direct,Dict,'true');
-
-%% Range Estimation via TV
-Direct.Range.TV = dirRange_TV(Data,Direct,Dict,'true');
-% figure, plot(Dict.f,Direct.Range.TV.Error), grid on
-% OPTIMAL IDX: 19
+Direct = directSoundRange(Data,Direct,res,rMinMax,Direct.f,RangeMethod,true);
+clear res rMinMax RangeMethod
 
 %% ------------ EARLY REFLECTIONS ------------ %%
 TotT = [8 10; 11 15; 16 18]*1e-3;
@@ -166,7 +90,7 @@ for ii = 1:Early.totR
     Early.R = 1;                % Number of early reflections
     
     %% DOA Estimation via Compressive Sensing
-    Early.DOA.CS{ii} = earlyDOA_CS(Data,Early,Dict,'true');     % OUTPERFORMS LASSO
+    Early.DOA.CS{ii} = earlyDOA_CS(Data,Early,Dict);     % OUTPERFORMS LASSO
     
     %% DOA Estimation via Elastic Net
     % Early.DOA.EN = earlyDOA_EN(Data,Early,Dict,'true');   % DOES NOT WORK
@@ -191,34 +115,54 @@ for ii = 1:Early.totR
     % Early.Range.CS = earlyRange_CS(Data,Early,Dict,'true');
     
     %% Range Estimation via TV
-    Early.Range.TV = earlyRange_TV(Data,Early,Dict,'true');
+    Early.Range.TV = earlyRange_TV(Data,Early,Dict);
     
 end
 clear ii
 disp('Early reflections: Spherical Wave Dictionary... OK')
 
 %% ------------ PLANE WAVE EXPANSION ------------ %%
-PWE.T = 30*1e-3;     % Source near field
-
+PWE.T = 1;
 PWE = windowRIR(Data,0,PWE.T);
 
-Dict.PWE.N = 1e3;    % Number of plane waves
-PWE.f = Data.f(0 <= Data.f & Data.f <= 1e3);
-PWE.f = PWE.f(1:50:end);
+Dict.PWE.N = 2.5e3;    % Number of plane waves
+PWE.f = Data.f(1 <= Data.f & Data.f <= 1.5e3);
+PWE.f = PWE.f(1:10:end);
 
-[Dict.PWE.H,~] = dictionary(Data.c,PWE.f,Data.InnSph.pos',Dict.PWE.N);
-
+% PWE.f = 500;
 %% Coefficient estimation
 PWE.x = nan(Dict.PWE.N,length(PWE.f));
-for ii = 1:length(PWE.f)
-    [PWE.x(:,ii),~] = reguLeastSquares(squeeze(Dict.PWE.H(:,:,ii)),Direct.InnSph.H(Data.f==PWE.f(ii),:).');
+for ii = 1:length(PWE.f)    
+    [H,~] = dictionary(Data.c,PWE.f(ii),Data.InnSph.pos',Dict.PWE.N);
+%     [PWE.x(:,ii),~] = reguLeastSquares(H,PWE.InnSph.H(Data.f==PWE.f(ii),:).');
+
+    Nnorm = 10^(10/20)*PWE.InnSph.Nnorm(Data.f==PWE.f(ii));
+    p = PWE.InnSph.H(Data.f==PWE.f(ii),:).';
+    % COMPRESSIVE SENSING
+    cvx_begin quiet
+    cvx_precision high
+        variable x(Dict.PWE.N) complex;
+        minimize norm(x,1);
+        subject to
+            norm((H*x-p),2) <= Nnorm;
+    cvx_end
+
+    PWE.x(:,ii) = x;
+
+    disp(strcat("Freq... ",string(round(ii/length(PWE.f)*100,2)),"%"))
 end
-Dict.PWE = rmfield(Dict.PWE,'H');
+clear H
+% Dict.PWE = rmfield(Dict.PWE,'H');
 
 %% Reconstruction
-[Dict.PWE.HR,~] = dictionary(Data.c,PWE.f,Data.Ref.pos',Dict.PWE.N);
+% Mic = 200;
+% Mic = 230;
+Mic = 10;
 
-PWE.P = nan(size(Data.Ref.pos,1),length(PWE.f));
+[Dict.PWE.HR,~] = dictionary(Data.c,PWE.f,Data.InnSph.pos(Mic,:)',Dict.PWE.N);
+
+% PWE.P = zeros(1,length(Data.f));
+PWE.P = zeros(1,length(PWE.f));
 for ii = 1:length(PWE.f)
     PWE.P(:,ii) = squeeze(Dict.PWE.HR(:,:,ii))*PWE.x(:,ii);
 end
@@ -226,11 +170,55 @@ Dict.PWE = rmfield(Dict.PWE,'HR');
 
 %% Inverse Fourier Transform
 % Double-sided spectrum
-PWE.P2 = [real(PWE.P(:,1)) PWE.P(:,2:end-1)/2 PWE.P(:,end)];
-PWE.P2 = [PWE.P2 flip(conj(PWE.P2(:,2:end-1)),2)]*(2*Data.Nsamples);
-PWE.p = ifft(PWE.P2,[],2,'symmetric');
+PWE.P2 = [real(PWE.P(:,1)) PWE.P(:,1:end-1)/2 PWE.P(:,end)];
+PWE.P2 = [PWE.P2 flip(conj(PWE.P2(:,2:end-1)),2)];
+PWE.h = ifft(PWE.P2*Data.Nsamples,[],2,'symmetric').';
 
+%% Frequency Domain Plot
+HTrue = 20*log10(abs(Data.InnSph.H(:,Mic)));
+% HTrue = HTrue-max(HTrue);
 
+HRec = 20*log10(abs(PWE.P2(:,1:end/2)));
+% HRec = HRec - max(HRec);
+
+figure, hold on
+plot(PWE.f,HRec)
+plot(Data.f,HTrue), grid on
+xlabel('Frequency in Hz'), ylabel('Magnitude $|H(j\omega)|$ in dB')
+legend('Reconstruction','True')
+% axis([0 PWE.f(end) -40 0])
+applyAxisProperties(gca)
+applyLegendProperties(gcf)
+
+%% Microphone
+setupPlot(Data,true,false,false);
+scatter3(Data.Ref.pos(Mic,1),Data.Ref.pos(Mic,2),Data.Ref.pos(Mic,3),150,'filled')
+
+%%
+figure
+plot(Plot.t*1e3,PWE.h(Plot.N(1):Plot.N(2)-1,:)/max(abs(PWE.h(Plot.N(1):Plot.N(2)-1,:)))), hold on
+plot(Plot.t*1e3,Data.Ref.h(Plot.N(1):Plot.N(2)-1,Mic)/max(abs(Data.Ref.h(Plot.N(1):Plot.N(2)-1,Mic))))
+legend('Reconstruction','True')
+
+%%
+figure
+% plot(PWE.h/max(PWE.h(:,Mic))), hold on
+% plot(Data.Ref.h(:,Mic)/max(Data.Ref.h(:,Mic)))
+plot(PWE.h), hold on
+plot(Data.Ref.h(:,Mic))
+legend('Reconstruction','True')
+
+%% Plot
+figure
+s = surf(Data.Ref.pos(:,1),Plot.t*1e3,PWE.h(Plot.N(1):Plot.N(2)-1,:));
+set(s,'edgecolor','none')
+xlabel('x in m'), ylabel('Time in ms')
+colormap hot
+view(2)
+c = colorbar;
+caxis([-0.04 0.04])
+applyColorbarProperties(c,'Room Impulse Response in Pa/V')
+applyAxisProperties(gca)
 
 
 

@@ -40,10 +40,8 @@ Structure.InnSph.h = Structure.w.*Data.InnSph.h;
 Structure.InnSph.n = Structure.w(:,size(Data.Sph.n,2)).*Data.Sph.n(1:2:end,:);
 
 % Frequency Domain
-Structure.InnSph.H = fft(Structure.InnSph.h,2*Data.Nsamples)/Data.Nsamples;
-Structure.InnSph.H = [Structure.InnSph.H(1,:); 2*Structure.InnSph.H(2:end/2,:)];
-Structure.InnSph.N = fft(Structure.InnSph.n,2*Data.Nsamples)/Data.Nsamples;
-Structure.InnSph.N = [Structure.InnSph.N(1,:); 2*Structure.InnSph.N(2:end/2,:)];
+[Structure.InnSph.H,~] = fftUniBi(Structure.InnSph.h);
+[Structure.InnSph.N,~] = fftUniBi(Structure.InnSph.n);
 
 % Noise norm
 Structure.InnSph.Nnorm = mean(abs(Structure.InnSph.N),2);

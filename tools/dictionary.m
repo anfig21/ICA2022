@@ -28,21 +28,20 @@ uk = -fibonacciSampling(N);      % uk point inwards the sphere
 if f(1) == 0, f(1) = f(2); end
 
 % Propagation vector
-k = c./(2*pi*f);
+k = (2*pi*f)/c;
 kv = nan(3,N,Nf);
 for ii = 1:Nf, kv(:,:,ii) = k(ii)*uk; end
 
 % Dictionary
 H = nan(M,N,Nf);
-d = waitbar(0,'Loading...0\%','Name','Building dictionary...');
+if Nf > 1, d = waitbar(0,'Loading...0\%','Name','Building dictionary...'); end
 for ii = 1:Nf
     H(:,:,ii) = exp(-1i*r0'*squeeze(kv(:,:,ii)));
-    waitbar(ii/Nf,d,strcat("Loading... ",string(round(100*ii/Nf,2)),"\,\%"));
+    if Nf > 1, waitbar(ii/Nf,d,strcat("Loading... ",string(round(100*ii/Nf,2)),"\,\%")); end
 end
-delete(d)
+if Nf > 1, delete(d), end
 
 % Normalisation
-H = H./vecnorm(H,2,2);
+% H = H./vecnorm(H,2,2);
 
-disp('Plane Wave Dictionary... OK')
 end

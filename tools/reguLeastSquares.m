@@ -36,5 +36,8 @@ end
 
 [x,~,~] = tikhonov(U,s,V,p,lambda);
 
+% Picard condition
+% figure, picard(U,s,p);
+
 end
 

@@ -32,7 +32,7 @@ M = size(r,2);
 Nf = length(f);
 
 % Propagation vector
-k = c./(2*pi*f);
+k = (2*pi*f)/c;
 
 % Distance to the candidate sources
 d = nan(M,N);
@@ -46,12 +46,12 @@ end
 H = nan(M,N,Nf);
 for ff = 1:Nf
 %     H(:,:,ff) = (1./d).*exp(-1i*d*k(ff));
-    H(:,:,ff) = (1./d.^2).*exp(-1i*d*k(ff));
-%     H(:,:,ff) = exp(-1i*d*k(ff));
+%     H(:,:,ff) = (1./d.^2).*exp(-1i*d*k(ff));
+    H(:,:,ff) = exp(-1i*d*k(ff));
 %     H(:,:,ff) = d.*exp(-1i*d*k(ff));
 end
 
 % Normalisation
-H = H./vecnorm(H,2,2);
+% H = H./vecnorm(H,2,2);
 
 end

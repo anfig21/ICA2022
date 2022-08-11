@@ -23,7 +23,7 @@ function Direct = directSoundRange(Data,Direct,res,rMinMax,f,RangeMethod,plotFla
 
 %% ERROR HANDLING
 if nargin < 5, error('directSoundRange Error: Not enough input parameters.'), end
-if N <= 0, error('directSoundRange Error: The number of plane waves must be a positive integer.'), end
+if res <= 0, error('directSoundRange Error: The spatial resolution must be a positive double.'), end
 if numel(rMinMax) ~=2 || rMinMax(1) > rMinMax(2), error('directSoundRange Error: rMinMax must be a vector of double in ascending order.'), end
 if nargin < 6, plotFlag = false; end
 
@@ -54,7 +54,7 @@ switch RangeMethod
 end
 
 % Mode & Error
-Direct.Range.Error = vecnorm(Data.Source.pos.'-Range.Est);
+Direct.Range.Error = vecnorm(Data.Source.pos.'-Direct.Range.Est);
 Direct.Range.Mode = mode(Direct.Range.Est,2);
 
 %% PLOT
@@ -71,12 +71,13 @@ if plotFlag
     scatter3(Data.Ref.pos(:,1),Data.Ref.pos(:,2),Data.Ref.pos(:,3)), hold on
     scatter3(Data.InnSph.pos(:,1),Data.InnSph.pos(:,2),Data.InnSph.pos(:,3))
     scatter3(Data.Source.pos(1),Data.Source.pos(2),Data.Source.pos(3),200,'filled')
+    scatter3(Dict.r(1,:),Dict.r(2,:),Dict.r(3,:))
     scatter3(Direct.Range.Mode(1),Direct.Range.Mode(2),Direct.Range.Mode(3),150,'filled')
     
     drawRoom(Data.D(1),Data.D(2),Data.D(3)), axis equal
     axis([0 Data.D(1) 0 Data.D(2) 0 Data.D(3)])
     xlabel('x in m'), ylabel('y in m'), zlabel('z in m')
-    legend('Reference Line','Spherical Array','Source','Range Estimation')
+    legend('Reference Line','Spherical Array','Source','Candidates','Range Estimation')
     applyAxisProperties(gca)
     applyLegendProperties(gcf)
 end

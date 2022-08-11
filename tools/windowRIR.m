@@ -57,10 +57,10 @@ Structure.InnSph.Nnorm = mean(abs(Structure.InnSph.N),2);
 if plotFlag
     figure
     subplot(211), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Data.InnSph.h), grid on
-    xlim([5 35]), title('RIR')
+    xlim([Tini*1e3-1 Tfin*1e3+1]), title('RIR')
     applyAxisProperties(gca)
     subplot(212), plot((0:Data.Nsamples-1)*1e3/Data.Fs,Structure.InnSph.h), grid on
-    xlim([5 35]), title('Early Reflections'), xlabel('Time in ms')
+    xlim([Tini*1e3-1 Tfin*1e3+1]), title('Windowed Signal'), xlabel('Time in ms')
     applyAxisProperties(gca)
 end
 

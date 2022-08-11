@@ -9,11 +9,11 @@ function [X1,X2] = fftUniBi(x)
 %       - X2        : bilateral spectrum. Nsamples x M
 %
 % Author: Antonio Figueroa Durán
-% Date: March 2022
+% Date: June 2022
 
 Nsamples = size(x,1);
 X2 = fft(x)/Nsamples;
-X1 = [X2(1,:); 2*X2(2:end/2,:)];
+X1 = [X2(1,:); 2*X2(2:Nsamples/2+1,:)];
 
 end
 

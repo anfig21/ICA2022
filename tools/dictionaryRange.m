@@ -45,9 +45,9 @@ end
 % Dictionary
 H = nan(M,N,Nf);
 for ff = 1:Nf
-%     H(:,:,ff) = (1./d).*exp(-1i*d*k(ff));
+    H(:,:,ff) = (1./d).*exp(-1i*d*k(ff));
 %     H(:,:,ff) = (1./d.^2).*exp(-1i*d*k(ff));
-    H(:,:,ff) = exp(-1i*d*k(ff));
+%     H(:,:,ff) = exp(-1i*d*k(ff));
 %     H(:,:,ff) = d.*exp(-1i*d*k(ff));
 end
 

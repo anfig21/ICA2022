@@ -1,12 +1,10 @@
-function Range = earlyRange_TV(Data,Early,Dict,plotFlag)
-%Range = earlyRange_TV(Data,Direct,Dict,plotFlag) Applies Total Variation to
+function Range = earlyRange_TV(Data,Early,Dict)
+%Range = earlyRange_TV(Data,Direct,Dict) Applies Total Variation to
 %the early reflections to obtain the position of the source
 %   Input:
-%       - Data      : raw data. Structure
-%       - Early     : early reflections. Structure
-%       - Dict      : dictionary of plane waves. Structure
-%       - plotFlag  : 'true' to plot setup & DOA estimation
-%                     'false' to avoid plotting. Default value
+%       - Data          : raw data. Structure
+%       - Early         : early reflections. Structure
+%       - Dict          : dictionary of plane waves. Structure
 %   Output:
 %       - Range        : Range estimation via TV. Structure
 %
@@ -31,23 +29,23 @@ st = 3; mask = [1; -2; 1];        % Second order
 c = waitbar(0,'Loading...0\%','Name','earlyRange_TV: CVX across frequencies...');
 cc = 0;
 for rr = 1:Early.R
-    Mask = padarray(mask, Dict.SphEarly.N{rr}-st,'post');
-    M = circshift(Mask(:),Dict.SphEarly.N{rr}-(st-1)/2);
-    D = zeros(Dict.SphEarly.N{rr});
-    for ii=1:Dict.SphEarly.N{rr}
+    Mask = padarray(mask, Dict.N{rr}-st,'post');
+    M = circshift(Mask(:),Dict.N{rr}-(st-1)/2);
+    D = zeros(Dict.N{rr});
+    for ii=1:Dict.N{rr}
         D(ii,:)=circshift(M.',[0 ii-1]);
     end
     
     for ii = 1:length(Dict.f)
         Nnorm = 10^(NoiseMargin/20)*Early.InnSph.Nnorm(Data.f==Dict.f(ii));
-        Hii = squeeze(Dict.SphEarly.H{rr}(:,:,ii));
+        Hii = squeeze(Dict.H{rr}(:,:,ii));
         pii = Early.InnSph.H(Data.f==Dict.f(ii),:).';
         %     pii = unwrap(angle(pii));
         
         % CVX Formulation
         cvx_begin quiet
         cvx_precision high
-        variable x(Dict.SphEarly.N{rr}) complex;
+        variable x(Dict.N{rr}) complex;
         minimize norm(D*x,1);
         subject to
         norm((Hii*x-pii),2) <= Nnorm;
@@ -55,12 +53,12 @@ for rr = 1:Early.R
         
         % Coefficients plot
         figure
-        stem(vecnorm(Dict.SphEarly.r{rr}-Data.Sph.R0.'),abs(x)), grid on
+        stem(vecnorm(Dict.r{rr}-Data.Sph.R0.'),abs(x)), grid on
         xlabel('r in m'), ylabel('Coefficients')
         applyAxisProperties(gca)
         
         [~,Idx] = max(abs(x));
-        Range.Est{rr}(:,ii) = Dict.SphEarly.r{rr}(:,Idx);
+        Range.Est{rr}(:,ii) = Dict.r{rr}(:,Idx);
         
         cc = cc + 1;
         waitbar(cc/(length(Dict.f)*Early.R),c,strcat("Loading... ",...

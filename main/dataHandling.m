@@ -20,11 +20,24 @@ Data.Sph.n = Data.Sph.n(1:2*Data.Nsamples,:);
 Data.Sph.p = Data.Sph.p(1:2*Data.Nsamples,:);
 
 % Inner Sphere (156 Microphones: samples 155-end)
+% Idx = 155:2:size(Data.Sph.pos,1);
 Idx = 155:size(Data.Sph.pos,1);
 Data.InnSph.M = length(Idx);
 Data.InnSph.pos = Data.Sph.pos(Idx,:);
 Data.InnSph.h = Data.Sph.h(:,Idx);
 Data.InnSph.p = Data.Sph.p(:,Idx);
+
+% Low-pass filter
+% Fc = 5e3;
+% lpFilt = designfilt('lowpassfir','PassbandFrequency',Fc, ...
+%             'StopbandFrequency',Fc*1.3,'PassbandRipple',0.5, ...
+%             'StopbandAttenuation',65,'DesignMethod','kaiserwin',...
+%             'SampleRate',Data.Fs);
+% 
+% Data.Ref.h = filtfilt(lpFilt,Data.Ref.h);
+% Data.InnSph.h = filtfilt(lpFilt,Data.InnSph.h);
+% Data.InnSph.p = filtfilt(lpFilt,Data.InnSph.p);
+% Data.Sph.n = filtfilt(lpFilt,Data.Sph.n);
 
 % Frequency domain
 [Data.InnSph.H,~] = fftUniBi(Data.InnSph.h);

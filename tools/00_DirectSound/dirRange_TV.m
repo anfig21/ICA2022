@@ -20,8 +20,8 @@ NoiseMargin = 10;           % dB
 
 % Stencil
 % st = 3; mask = [1; -1; 0];        % First order
-st = 3; mask = [1; -2; 1];        % Second order
-% st = 3; mask = [0.5; -1; 0.5];    % Weighted Second order
+% st = 3; mask = [1; -2; 1];        % Second order
+st = 3; mask = [0.5; -1; 0.5];    % Weighted Second order
 % st = 5; mask = [0.5; 1; -3; 1; 0.5];  % Fourth order
 
 Mask = padarray(mask, Dict.N-st,'post');

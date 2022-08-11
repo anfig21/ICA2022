@@ -26,14 +26,15 @@ if nargin < 2, flagS = false; end
 %% MAIN CODE
 Plot.T = [5 25]*1e-3;       % Source near field
 % Plot.T = [15 35]*1e-3;    % Source far field
+% Plot.T = [40 70]*1e-3;
 Plot.N = Data.Fs*Plot.T;
 
 % Time vector
-Plot.t = Plot.T(1):1/Data.Fs:Plot.T(2)-(1/Data.Fs);
+Plot.t = Data.t(Data.t >= Plot.T(1) & Data.t <= Plot.T(2));
 
 % Data downsizing
-Plot.Ref.h = Data.Ref.h(Plot.N(1):Plot.N(2)-1,:);
-Plot.InnSph.h = Data.InnSph.h(Plot.N(1):Plot.N(2)-1,:);
+Plot.Ref.h = Data.Ref.h(ismember(Data.t,Plot.t),:);
+Plot.InnSph.h = Data.InnSph.h(ismember(Data.t,Plot.t),:);
 
 if flagS
     figure
@@ -52,14 +53,14 @@ if flagH, plotFreqResponse(Data), end
 
 % REFERENCE LINE RIR PLOT
 if flagT
-    figure
-    s = surf(Data.Ref.pos(:,1),Plot.t*1e3,Plot.Ref.h);
+    figure, hold on
+    s = pcolor(Data.Ref.pos(:,1),Plot.t*1e3,Plot.Ref.h);
     set(s,'edgecolor','none')
     xlabel('x in m'), ylabel('Time in ms')
     colormap hot
-    view(2)
     c = colorbar;
     caxis([-0.04 0.04])
+    xline(min(Data.InnSph.pos(:,1))), xline(max(Data.InnSph.pos(:,1)))
     applyColorbarProperties(c,'Room Impulse Response in Pa/V')
     applyAxisProperties(gca)
 end

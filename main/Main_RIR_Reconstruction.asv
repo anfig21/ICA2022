@@ -78,8 +78,8 @@ clear res rMinMax RangeMethod
 Rec.T = [5 7.5]*1e-3;
 Rec.Direct = windowRIR(Data,Rec.T(1),Rec.T(2));
 
-res = .5e-1;     % Spatial resolution (m)
-L = 0.05;          % Cube side (m)
+res = .e-1;     % Spatial resolution (m)
+L = 0.2;          % Cube side (m)  % 1 point source
 Rec.Direct.f = Data.f(1 <= Data.f & Data.f <= 5e3);
 RecMethod = 'CS';
 
@@ -106,7 +106,7 @@ figure, plot(abs(Rec.Direct.x).')
 % Windowing
 % TotT = [8 10; 11 15; 16 18]*1e-3;
 Early.T = [8 10]*1e-3;
-
+    
 Early = windowRIR(Data,Early.T(1),Early.T(2));
 
 %% DOA Estimation

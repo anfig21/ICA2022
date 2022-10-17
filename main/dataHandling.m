@@ -28,16 +28,16 @@ Data.InnSph.h = Data.Sph.h(:,Idx);
 Data.InnSph.p = Data.Sph.p(:,Idx);
 
 % Low-pass filter
-% Fc = 5e3;
-% lpFilt = designfilt('lowpassfir','PassbandFrequency',Fc, ...
-%             'StopbandFrequency',Fc*1.3,'PassbandRipple',0.5, ...
-%             'StopbandAttenuation',65,'DesignMethod','kaiserwin',...
-%             'SampleRate',Data.Fs);
-% 
-% Data.Ref.h = filtfilt(lpFilt,Data.Ref.h);
-% Data.InnSph.h = filtfilt(lpFilt,Data.InnSph.h);
-% Data.InnSph.p = filtfilt(lpFilt,Data.InnSph.p);
-% Data.Sph.n = filtfilt(lpFilt,Data.Sph.n);
+Fc = 5e3;
+lpFilt = designfilt('lowpassfir','PassbandFrequency',Fc, ...
+            'StopbandFrequency',Fc*1.3,'PassbandRipple',0.5, ...
+            'StopbandAttenuation',65,'DesignMethod','kaiserwin',...
+            'SampleRate',Data.Fs);
+
+Data.Ref.h = filtfilt(lpFilt,Data.Ref.h);
+Data.InnSph.h = filtfilt(lpFilt,Data.InnSph.h);
+Data.InnSph.p = filtfilt(lpFilt,Data.InnSph.p);
+Data.Sph.n = filtfilt(lpFilt,Data.Sph.n);
 
 % Frequency domain
 [Data.InnSph.H,~] = fftUniBi(Data.InnSph.h);

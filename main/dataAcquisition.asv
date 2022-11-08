@@ -29,10 +29,20 @@ Data.Line3.n = h5read(Data.loudspeaker,'/dataset_lin3/noise');
 %% SPHERICAL ARRAY
 % Single spherical array
 Data.Sph.pos = h5read(Data.loudspeaker,'/dataset_sph1/position');
+% Data.Sph.h = h5read(Data.loudspeaker,'/dataset_sph1/impulse_response');
+% Data.Sph.p = h5read(Data.loudspeaker,'/dataset_sph1/pressure');
+% Data.Sph.n = h5read(Data.loudspeaker,'/dataset_sph1/noise');
+Data.Sph.R0 = mean(Data.Sph.pos,1);
+
+Data.Sph.pos = h5read(Data.loudspeaker,'/dataset_sph1/position');
 Data.Sph.h = h5read(Data.loudspeaker,'/dataset_sph1/impulse_response');
 Data.Sph.p = h5read(Data.loudspeaker,'/dataset_sph1/pressure');
 Data.Sph.n = h5read(Data.loudspeaker,'/dataset_sph1/noise');
-Data.Sph.R0 = mean(Data.Sph.pos,1);
+
+Data.Sph.pos = h5read(Data.loudspeaker,'/dataset_sph1/position');
+Data.Sph.h = h5read(Data.loudspeaker,'/dataset_sph1/impulse_response');
+Data.Sph.p = h5read(Data.loudspeaker,'/dataset_sph1/pressure');
+Data.Sph.n = h5read(Data.loudspeaker,'/dataset_sph1/noise');
 
 disp('Reading data... OK')
 

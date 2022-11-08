@@ -16,7 +16,7 @@ if nargin < 3, error('dirRange_TV Error: Not enough input parameters.'), end
 
 %% MAIN CODE
 Range.Est = nan(3,length(Dict.f));
-Range.Idx = nan(1,length(Dict.f));
+Range.Idx = nan(length(Dict.f);
 NoiseMargin = 10;           % dB
 
 % Stencil
@@ -49,7 +49,7 @@ for ii = 1:length(Dict.f)
     cvx_end
     
     [~,Range.Idx(ii)] = max(abs(x));
-    Range.Est(:,ii) = Dict.r(:,Range.Idx(ii));
+    Range.Est(:,ii) = Dict.r(:,Range.Idx);
     
     waitbar(ii/length(Dict.f),c,strcat("Loading... ",...
         string(round(100*ii/length(Dict.f),2)),"\,\%"));

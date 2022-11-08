@@ -50,7 +50,7 @@ switch RangeMethod
 end
 
 % Mode
-Early.Range.Mode = mode(Early.Range.Est,2);
+Early.Range.Mode = Early.Range.Est(:,mode(Early.Range.Idx));
 
 %% PLOT
 if plotFlag    

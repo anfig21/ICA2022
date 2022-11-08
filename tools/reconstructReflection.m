@@ -31,7 +31,7 @@ end
 NoiseMargin = 0;
 x = nan(M,Nf);
 c = parcluster('local');
-parpool(c,4);
+parpool(c,2);
 % for ii = 1:Nf
 parfor ii = 1:Nf
     H = (1./d).*exp(-1i*d*k(ii));       % Dictionary (point sources)

@@ -48,7 +48,7 @@ Data = dataHandling(Data);
 % - Setup
 % - Frequency response
 % - RIR reference line
-Plot = setupPlot(Data,true,false,false);
+Plot = setupPlot(Data,false,false,true);
 
 %% ------------ DIRECT SOUND FIELD ------------ %%
 % Windowing
@@ -78,8 +78,8 @@ clear res rMinMax RangeMethod
 Rec.T = [5 7.5]*1e-3;
 Rec.Direct = windowRIR(Data,Rec.T(1),Rec.T(2));
 
-res = .e-1;     % Spatial resolution (m)
-L = 0.2;          % Cube side (m)  % 1 point source
+res = .5e-1;     % Spatial resolution (m)
+L = 0.05;          % Cube side (m)
 Rec.Direct.f = Data.f(1 <= Data.f & Data.f <= 5e3);
 RecMethod = 'CS';
 
@@ -106,7 +106,7 @@ figure, plot(abs(Rec.Direct.x).')
 % Windowing
 % TotT = [8 10; 11 15; 16 18]*1e-3;
 Early.T = [8 10]*1e-3;
-    
+
 Early = windowRIR(Data,Early.T(1),Early.T(2));
 
 %% DOA Estimation
@@ -127,6 +127,44 @@ RangeMethod = 'TV';    % Range Estimation Method
 
 Early = earlySoundRange(Data,Early,res,rMinMax,Early.f,RangeMethod,true);
 clear res rMinMax RangeMethod
+
+%% Reconstruction
+Rec.h = Rec.Direct.h;
+
+PD.T0 = 6e-3;
+PD.T = [9.58333e-3 11.4375e-3 17.6667e-3]';
+
+PD.Range = vecnorm(Data.Sph.R0(:)-Data.Ref.pos(end/2,:)');
+PD.Range = PD.Range+(PD.T-PD.T0)*Data.c;                        % Distance estimated from time delay
+
+PD.TotT = PD.T+[-1.2 1.2]*1e-3;
+
+Early.T = PD.TotT(1,:);
+
+Rec.T = Early.T;
+Rec.Early = windowRIR(Data,Rec.T(1),Rec.T(2));
+
+res = 1e-1;     % Spatial resolution (m)
+L = 0.2;          % Cube side (m)
+Rec.Early.f = Data.f(1 <= Data.f & Data.f <= 3e3);
+RecMethod = 'CS';
+
+Rec.Early = reconstructReflection(Data,Rec.Early,Early.Range.Mode,L,res,RecMethod);
+clear res L RecMethod
+
+Rec.h = Rec.h+Rec.Early.h;
+
+% Plot
+figure, hold on
+s = pcolor(Data.Ref.pos(:,1),Plot.t*1e3,Rec.Early.h(Plot.N(1):Plot.N(2),:));
+set(s,'edgecolor','none')
+xlabel('x in m'), ylabel('Time in ms')
+colormap hot
+c = colorbar;
+caxis([-0.04 0.04])
+xline(min(Data.InnSph.pos(:,1))), xline(max(Data.InnSph.pos(:,1)))
+applyColorbarProperties(c,'Room Impulse Response in Pa/V')
+applyAxisProperties(gca)
 
 %% ------------ PLANE WAVE EXPANSION ------------ %%
 % Windowing

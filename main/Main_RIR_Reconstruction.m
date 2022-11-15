@@ -1,19 +1,21 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%                       SOUND FIELD RECONSTRUCTION
+%                  ROOM IMPULSE RESPONSE RECONSTRUCTION
 %
 % -------------------------------------------------------------------------
-% E. Fernandez-Grande et al., "Reconstruction of room impulse responses
-% over extended domains for navigable sound field reproduction", 2021
+% Figueroa-Duran, Fernandez-Grande, "Reconstruction of room impulse
+% responses over an extended spatial domain using block-sparse and kernel
+% regression methods", International Congress of Acoustics, 2022
 % -------------------------------------------------------------------------
 %
-% Antonio Figueroa Durán
+% Antonio Figueroa-Duran
 % anfig@dtu.dk
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc, clear, close all
 
-addpath(genpath('../tools'))
+addpath(genpath(pwd))
+addpath(genpath('../../tools'))
 % addpath(genpath('/Volumes/anfig/Data/room019/'))      % MacBook Pro
 addpath(genpath('M:\Data'))                             % Windows 10
 
@@ -167,6 +169,8 @@ applyColorbarProperties(c,'Room Impulse Response in Pa/V')
 applyAxisProperties(gca)
 
 %% ------------ PLANE WAVE EXPANSION ------------ %%
+% PWE in time domain does not work as expected
+
 % Windowing
 PWE.Freq.T = 1;
 PWE.Freq = windowRIR(Data,0,PWE.Freq.T);
@@ -186,9 +190,6 @@ tic
 PWE.Time = planeWaveExpansionTime(Data,PWE.Time.N,PWE.Time.t,PWE.Time.Q,Data.Ref.pos.',true);
 toc
 
-% Redefine toeplitz matrices with symmetrical values
-% Augment convolution order up to L+P-1
-
 figure, hold on
 plot(PWE.Time.t*1e3,PWE.Time.h(:,220)), grid on
 plot(Data.t*1e3,Data.Ref.h(:,220))
@@ -203,7 +204,6 @@ KRR.T = [69 70]*1e-3;
 % KRR.T = [0 1];
 
 KRR = windowRIR(Data,KRR.T(1),KRR.T(end));
-% KRR = kernelRidgeRegression(Data,KRR.t,KRR.f,Data.Ref.pos.',true);
 KRR.t = Data.t(Data.t >= KRR.T(1) & Data.t <= KRR.T(2));
 KRR.f = Data.f(0 <= Data.f & Data.f <= 5e3);
 

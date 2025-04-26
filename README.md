@@ -6,3 +6,5 @@ Cite this:
 Figueroa Durán, A. A., & Fernandez Grande, E. (2022). Reconstruction of room impulse responses over an extended spatial domain using block-sparse and kernel regression methods. In Proceedings of the 24th International Congress on Acoustics
 
 Find the publication [here](https://www.researchgate.net/publication/364778357_Reconstruction_of_room_impulse_responses_over_an_extended_spatial_domain_using_block-sparse_and_kernel_regression_methods).
+
+Find the data [here](https://data.dtu.dk/articles/dataset/Room_Impulse_Response_Dataset_-_ACT_DTU_Electro_019_/25867705).
